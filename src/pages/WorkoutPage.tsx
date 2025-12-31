@@ -1,11 +1,28 @@
 import { useState, useMemo } from "react";
-import { Check, Plus, Minus, Coffee, Dumbbell, Calendar, Play, Trophy, Search, X, Sparkles } from "lucide-react";
+import { Check, Plus, Minus, Coffee, Dumbbell, Calendar, Play, Trophy, Search, X, Sparkles, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { 
   getWorkoutByDate, 
   saveWorkout, 
@@ -40,12 +57,60 @@ const EXERCISE_GROUPS = ALL_EXERCISES.reduce((acc, ex) => {
   return acc;
 }, {} as Record<string, typeof ALL_EXERCISES>);
 
+// Sortable exercise item component
+function SortableExerciseItem({ exercise, onRemove }: { exercise: Exercise; onRemove: () => void }) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: exercise.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-xl text-sm font-medium transition-all",
+        isDragging && "opacity-50 scale-105 shadow-lg z-50"
+      )}
+    >
+      <button
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing touch-none"
+      >
+        <GripVertical className="w-3.5 h-3.5 opacity-70" />
+      </button>
+      <span className="flex-1">{exercise.name}</span>
+      <button
+        onClick={onRemove}
+        className="hover:bg-primary-foreground/20 rounded p-0.5 transition-colors"
+      >
+        <X className="w-3.5 h-3.5" />
+      </button>
+    </div>
+  );
+}
+
 export default function WorkoutPage() {
   const [workout, setWorkout] = useState<Workout | null>(() => getWorkoutByDate(getTodayDate()));
   const [isActive, setIsActive] = useState(false);
   const [showCustomBuilder, setShowCustomBuilder] = useState(false);
   const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
   const [exerciseSearch, setExerciseSearch] = useState("");
+  
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  );
   
   const profile = getUserProfile();
   const isCoachUser = profile?.experienceLevel === 'new' && profile?.coachProfile;
@@ -103,6 +168,17 @@ export default function WorkoutPage() {
       if (exists) return prev.filter(e => e.id !== exercise.id);
       return [...prev, exercise];
     });
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setSelectedExercises((items) => {
+        const oldIndex = items.findIndex((item) => item.id === active.id);
+        const newIndex = items.findIndex((item) => item.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
   };
 
   const startCustomWorkout = () => {
@@ -228,19 +304,30 @@ export default function WorkoutPage() {
 
         {selectedExercises.length > 0 && (
           <div className="mb-4 p-3 bg-primary/10 rounded-xl border border-primary/20">
-            <p className="text-sm font-medium mb-2 text-primary">Selected ({selectedExercises.length})</p>
-            <div className="flex flex-wrap gap-2">
-              {selectedExercises.map(ex => (
-                <button
-                  key={ex.id}
-                  onClick={() => toggleExerciseSelection(ex)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:bg-primary/90 transition-colors"
-                >
-                  {ex.name}
-                  <X className="w-3 h-3" />
-                </button>
-              ))}
-            </div>
+            <p className="text-sm font-medium mb-2 text-primary flex items-center gap-2">
+              Selected ({selectedExercises.length})
+              <span className="text-xs font-normal text-primary/70">• Drag to reorder</span>
+            </p>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={selectedExercises.map(ex => ex.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                <div className="flex flex-col gap-2">
+                  {selectedExercises.map(ex => (
+                    <SortableExerciseItem
+                      key={ex.id}
+                      exercise={ex}
+                      onRemove={() => toggleExerciseSelection(ex)}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
           </div>
         )}
 
