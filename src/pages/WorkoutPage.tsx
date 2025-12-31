@@ -1,7 +1,6 @@
-import { useState, useMemo } from "react";
-import { Check, Plus, Minus, ChevronRight, Play, Trophy } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Check, Plus, Minus, Coffee, Dumbbell, Calendar, Play, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { 
@@ -9,9 +8,11 @@ import {
   saveWorkout, 
   getTodayDate, 
   generateId,
-  DEFAULT_EXERCISES 
+  DEFAULT_EXERCISES,
+  getUserProfile,
+  getTodayPlannedWorkout
 } from "@/lib/storage";
-import { Workout, WorkoutType, WorkoutExercise, ExerciseSet } from "@/lib/types";
+import { Workout, WorkoutType, WorkoutExercise } from "@/lib/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -20,13 +21,21 @@ const WORKOUT_TYPES: { id: WorkoutType; label: string; emoji: string }[] = [
   { id: 'pull', label: 'Pull', emoji: '🎯' },
   { id: 'legs', label: 'Legs', emoji: '🦵' },
   { id: 'full-body', label: 'Full Body', emoji: '⚡' },
+  { id: 'upper', label: 'Upper Body', emoji: '🏋️' },
+  { id: 'lower', label: 'Lower Body', emoji: '🦿' },
   { id: 'rest', label: 'Rest Day', emoji: '😴' },
 ];
 
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
 export default function WorkoutPage() {
   const [workout, setWorkout] = useState<Workout | null>(() => getWorkoutByDate(getTodayDate()));
-  const [selectedType, setSelectedType] = useState<WorkoutType | null>(null);
   const [isActive, setIsActive] = useState(false);
+  
+  const profile = getUserProfile();
+  const isCoachUser = profile?.experienceLevel === 'new' && profile?.coachProfile;
+  const todayPlan = getTodayPlannedWorkout();
+  const dayName = DAY_NAMES[new Date().getDay()];
 
   const completedSets = useMemo(() => {
     if (!workout) return 0;
@@ -41,13 +50,23 @@ export default function WorkoutPage() {
     return workout.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
   }, [workout]);
 
+  const getExercisesForType = (type: WorkoutType) => {
+    if (type === 'upper') {
+      return [...(DEFAULT_EXERCISES.push || []), ...(DEFAULT_EXERCISES.pull || []).slice(0, 2)];
+    }
+    if (type === 'lower') {
+      return DEFAULT_EXERCISES.legs || [];
+    }
+    return DEFAULT_EXERCISES[type as keyof typeof DEFAULT_EXERCISES] || [];
+  };
+
   const startWorkout = (type: WorkoutType) => {
     if (type === 'rest') {
       toast.success("Rest day! Take it easy 😴");
       return;
     }
 
-    const exercises = DEFAULT_EXERCISES[type as keyof typeof DEFAULT_EXERCISES] || [];
+    const exercises = getExercisesForType(type);
     
     const workoutExercises: WorkoutExercise[] = exercises.map(ex => ({
       id: generateId(),
@@ -138,8 +157,151 @@ export default function WorkoutPage() {
     toast.success("Workout complete! Great job 💪");
   };
 
-  // Render workout type selection
-  if (!workout && !selectedType) {
+  // Rest day view for AI Coach users
+  if (isCoachUser && todayPlan?.isRestDay && !workout) {
+    return (
+      <div className="min-h-screen bg-background pb-24">
+        <div className="max-w-lg mx-auto px-4">
+          <PageHeader 
+            title="Rest Day" 
+            subtitle={dayName}
+          />
+
+          <div className="mt-8 text-center">
+            <div className="w-24 h-24 rounded-full bg-secondary flex items-center justify-center mx-auto mb-6">
+              <Coffee className="w-12 h-12 text-muted-foreground" />
+            </div>
+            
+            <h2 className="text-2xl font-display font-bold mb-2">Today is Rest Day</h2>
+            <p className="text-muted-foreground mb-8 max-w-xs mx-auto">
+              Recovery is just as important as training. Your muscles grow while you rest.
+            </p>
+
+            <div className="bg-card rounded-2xl border border-border p-6 text-left mb-6">
+              <h3 className="font-semibold mb-3">Recovery Tips</h3>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  Get 7-9 hours of sleep
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  Stay hydrated throughout the day
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  Light stretching or walking is okay
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-primary mt-0.5">•</span>
+                  Keep up your protein intake
+                </li>
+              </ul>
+            </div>
+
+            <Button 
+              variant="outline" 
+              onClick={() => setIsActive(true)}
+              className="gap-2"
+            >
+              <Dumbbell className="w-4 h-4" />
+              Train Anyway
+            </Button>
+          </div>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // Today's planned workout for AI Coach users
+  if (isCoachUser && todayPlan && !todayPlan.isRestDay && !workout) {
+    const plannedType = todayPlan.type;
+    const typeInfo = WORKOUT_TYPES.find(t => t.id === plannedType);
+    const exercises = getExercisesForType(plannedType);
+
+    return (
+      <div className="min-h-screen bg-background pb-24">
+        <div className="max-w-lg mx-auto px-4">
+          <PageHeader 
+            title="Today's Workout" 
+            subtitle={dayName}
+          />
+
+          <div className="mt-4">
+            {/* Today's Plan Card */}
+            <div className="bg-gradient-subtle rounded-2xl border border-border p-6 mb-6">
+              <div className="flex items-center gap-4 mb-4">
+                <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <span className="text-3xl">{typeInfo?.emoji}</span>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Your plan for today</p>
+                  <h2 className="text-2xl font-display font-bold">{typeInfo?.label}</h2>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
+                <span className="flex items-center gap-1">
+                  <Dumbbell className="w-4 h-4" />
+                  {exercises.length} exercises
+                </span>
+                <span className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  ~45 min
+                </span>
+              </div>
+
+              <Button 
+                size="lg" 
+                className="w-full h-14 text-base font-medium gap-2"
+                onClick={() => startWorkout(plannedType)}
+              >
+                <Play className="w-5 h-5" />
+                Start Workout
+              </Button>
+            </div>
+
+            {/* Exercise Preview */}
+            <div className="bg-card rounded-2xl border border-border overflow-hidden">
+              <div className="p-4 border-b border-border">
+                <h3 className="font-semibold">Exercises</h3>
+              </div>
+              <div className="divide-y divide-border">
+                {exercises.map((ex, i) => (
+                  <div key={ex.id} className="p-4 flex items-center gap-3">
+                    <span className="w-6 h-6 rounded-full bg-secondary text-xs font-medium flex items-center justify-center">
+                      {i + 1}
+                    </span>
+                    <div>
+                      <p className="font-medium text-sm">{ex.name}</p>
+                      <p className="text-xs text-muted-foreground">{ex.muscleGroup}</p>
+                    </div>
+                    <span className="ml-auto text-xs text-muted-foreground">3 sets</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Option to do a different workout */}
+            <p className="text-center text-sm text-muted-foreground mt-6">
+              Want to do something different?{' '}
+              <button 
+                onClick={() => setIsActive(true)}
+                className="text-primary hover:underline"
+              >
+                Choose another workout
+              </button>
+            </p>
+          </div>
+        </div>
+        <BottomNav />
+      </div>
+    );
+  }
+
+  // Manual workout type selection (experienced users or when choosing different)
+  if (!workout && (isActive || !isCoachUser)) {
     return (
       <div className="min-h-screen bg-background pb-24">
         <div className="max-w-lg mx-auto px-4">
@@ -159,12 +321,22 @@ export default function WorkoutPage() {
                 <h3 className="font-semibold">{type.label}</h3>
                 {type.id !== 'rest' && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    {DEFAULT_EXERCISES[type.id as keyof typeof DEFAULT_EXERCISES]?.length || 0} exercises
+                    {getExercisesForType(type.id).length} exercises
                   </p>
                 )}
               </button>
             ))}
           </div>
+
+          {isCoachUser && (
+            <Button 
+              variant="ghost" 
+              className="w-full mt-4"
+              onClick={() => setIsActive(false)}
+            >
+              Back to Today's Plan
+            </Button>
+          )}
         </div>
         <BottomNav />
       </div>
