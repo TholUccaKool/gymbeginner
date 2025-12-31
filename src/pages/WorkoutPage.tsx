@@ -126,7 +126,7 @@ export default function WorkoutPage() {
     toast.success("Workout complete! Great job 💪");
   };
 
-  if (isCoachUser && todayPlan?.isRestDay && !workout) {
+  if (isCoachUser && todayPlan?.isRestDay && !workout && !isActive) {
     return (
       <div className="min-h-screen bg-background pb-24 gradient-mesh">
         <div className="max-w-lg mx-auto px-4">
