@@ -5,7 +5,6 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   DndContext,
   closestCenter,
@@ -331,7 +330,7 @@ export default function WorkoutPage() {
           </div>
         )}
 
-        <ScrollArea className="flex-1 min-h-0 -mx-6 px-6">
+        <div className="flex-1 min-h-0 -mx-6 px-6 overflow-y-auto overscroll-contain touch-pan-y">
           <div className="space-y-4 pb-4 pr-2">
             {Object.entries(filteredExercises).map(([group, exercises]) => (
               <div key={group}>
@@ -364,7 +363,7 @@ export default function WorkoutPage() {
               </div>
             ))}
           </div>
-        </ScrollArea>
+        </div>
 
         <div className="pt-4 border-t border-border/60">
           <Button 
