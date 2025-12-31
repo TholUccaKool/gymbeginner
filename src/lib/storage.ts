@@ -247,3 +247,46 @@ export const DEFAULT_EXERCISES = {
     { id: 'deadlift', name: 'Deadlift', muscleGroup: 'Back/Legs' },
   ],
 };
+
+// All available exercises for custom workouts
+export const ALL_EXERCISES = [
+  // Chest
+  { id: 'bench-press', name: 'Bench Press', muscleGroup: 'Chest' },
+  { id: 'incline-db-press', name: 'Incline Dumbbell Press', muscleGroup: 'Chest' },
+  { id: 'chest-fly', name: 'Chest Fly', muscleGroup: 'Chest' },
+  { id: 'push-ups', name: 'Push-ups', muscleGroup: 'Chest' },
+  { id: 'cable-crossover', name: 'Cable Crossover', muscleGroup: 'Chest' },
+  // Back
+  { id: 'deadlift', name: 'Deadlift', muscleGroup: 'Back' },
+  { id: 'barbell-row', name: 'Barbell Row', muscleGroup: 'Back' },
+  { id: 'pull-ups', name: 'Pull-ups', muscleGroup: 'Back' },
+  { id: 'lat-pulldown', name: 'Lat Pulldown', muscleGroup: 'Back' },
+  { id: 'seated-row', name: 'Seated Row', muscleGroup: 'Back' },
+  // Shoulders
+  { id: 'overhead-press', name: 'Overhead Press', muscleGroup: 'Shoulders' },
+  { id: 'lateral-raise', name: 'Lateral Raise', muscleGroup: 'Shoulders' },
+  { id: 'face-pulls', name: 'Face Pulls', muscleGroup: 'Shoulders' },
+  { id: 'front-raise', name: 'Front Raise', muscleGroup: 'Shoulders' },
+  { id: 'reverse-fly', name: 'Reverse Fly', muscleGroup: 'Shoulders' },
+  // Arms
+  { id: 'bicep-curl', name: 'Bicep Curl', muscleGroup: 'Biceps' },
+  { id: 'hammer-curl', name: 'Hammer Curl', muscleGroup: 'Biceps' },
+  { id: 'tricep-pushdown', name: 'Tricep Pushdown', muscleGroup: 'Triceps' },
+  { id: 'skull-crushers', name: 'Skull Crushers', muscleGroup: 'Triceps' },
+  { id: 'dips', name: 'Dips', muscleGroup: 'Triceps' },
+  // Legs
+  { id: 'squat', name: 'Squat', muscleGroup: 'Quads' },
+  { id: 'leg-press', name: 'Leg Press', muscleGroup: 'Quads' },
+  { id: 'lunges', name: 'Lunges', muscleGroup: 'Quads' },
+  { id: 'leg-extension', name: 'Leg Extension', muscleGroup: 'Quads' },
+  { id: 'romanian-deadlift', name: 'Romanian Deadlift', muscleGroup: 'Hamstrings' },
+  { id: 'leg-curl', name: 'Leg Curl', muscleGroup: 'Hamstrings' },
+  { id: 'hip-thrust', name: 'Hip Thrust', muscleGroup: 'Glutes' },
+  { id: 'calf-raise', name: 'Calf Raise', muscleGroup: 'Calves' },
+  // Core
+  { id: 'plank', name: 'Plank', muscleGroup: 'Core' },
+  { id: 'crunches', name: 'Crunches', muscleGroup: 'Core' },
+  { id: 'russian-twist', name: 'Russian Twist', muscleGroup: 'Core' },
+  { id: 'leg-raises', name: 'Leg Raises', muscleGroup: 'Core' },
+  { id: 'ab-wheel', name: 'Ab Wheel Rollout', muscleGroup: 'Core' },
+];
