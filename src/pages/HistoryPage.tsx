@@ -1,9 +1,9 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Dumbbell, Utensils } from "lucide-react";
+import { ChevronLeft, ChevronRight, Dumbbell, Utensils, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { getMeals, getWorkouts, getUserProfile } from "@/lib/storage";
-import { format, subDays, addDays, startOfDay, isSameDay } from "date-fns";
+import { format, subDays, addDays, isSameDay } from "date-fns";
 
 export default function HistoryPage() {
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -58,33 +58,39 @@ export default function HistoryPage() {
     return days;
   }, [allMeals, allWorkouts]);
 
+  const caloriePercent = Math.min((dayTotals.calories / targets.calories) * 100, 100);
+  const proteinPercent = Math.min((dayTotals.protein / targets.protein) * 100, 100);
+
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-24 gradient-mesh">
       <div className="max-w-lg mx-auto px-4">
-        <PageHeader title="History" />
+        <PageHeader title="History" subtitle="Track your progress" />
 
         {/* Week Overview */}
-        <div className="flex justify-between gap-1 mb-6">
-          {weekDays.map(({ date, hasWorkout, hasMeals }) => {
+        <div className="flex justify-between gap-1.5 mb-8">
+          {weekDays.map(({ date, hasWorkout, hasMeals }, index) => {
             const isSelected = isSameDay(date, selectedDate);
             return (
               <button
                 key={date.toISOString()}
                 onClick={() => setSelectedDate(date)}
-                className={`flex-1 py-2 rounded-xl transition-all ${
+                className={`flex-1 py-3 rounded-2xl transition-all duration-300 animate-slide-up ${
                   isSelected 
-                    ? 'bg-primary text-primary-foreground' 
-                    : 'bg-card border border-border hover:border-primary/50'
+                    ? 'bg-primary text-primary-foreground shadow-lg shadow-primary/20 scale-105' 
+                    : 'bg-card border border-border/60 hover:border-primary/40 hover:shadow-md'
                 }`}
+                style={{ animationDelay: `${index * 40}ms` }}
               >
-                <p className="text-xs opacity-70">{format(date, 'EEE')}</p>
-                <p className="font-bold">{format(date, 'd')}</p>
-                <div className="flex justify-center gap-1 mt-1">
+                <p className={`text-[10px] uppercase tracking-wide ${isSelected ? 'opacity-80' : 'text-muted-foreground'}`}>
+                  {format(date, 'EEE')}
+                </p>
+                <p className="font-display font-bold text-lg">{format(date, 'd')}</p>
+                <div className="flex justify-center gap-1.5 mt-1.5 h-2">
                   {hasWorkout && (
-                    <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-primary-foreground' : 'bg-primary'}`} />
+                    <div className={`w-2 h-2 rounded-full transition-colors ${isSelected ? 'bg-primary-foreground' : 'bg-primary'}`} />
                   )}
                   {hasMeals && (
-                    <div className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-primary-foreground/60' : 'bg-nutrition-calories'}`} />
+                    <div className={`w-2 h-2 rounded-full transition-colors ${isSelected ? 'bg-primary-foreground/70' : 'bg-nutrition-calories'}`} />
                   )}
                 </div>
               </button>
@@ -93,10 +99,10 @@ export default function HistoryPage() {
         </div>
 
         {/* Date Navigation */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 bg-card rounded-2xl border border-border/60 p-4 shadow-sm">
           <button 
             onClick={() => navigateDay('prev')}
-            className="p-2 rounded-lg hover:bg-secondary transition-colors"
+            className="p-2.5 rounded-xl hover:bg-secondary transition-all duration-200 active:scale-95"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -112,57 +118,79 @@ export default function HistoryPage() {
 
           <button 
             onClick={() => navigateDay('next')}
-            className="p-2 rounded-lg hover:bg-secondary transition-colors"
+            className="p-2.5 rounded-xl hover:bg-secondary transition-all duration-200 active:scale-95 disabled:opacity-30"
             disabled={isToday}
           >
-            <ChevronRight className={`w-5 h-5 ${isToday ? 'opacity-30' : ''}`} />
+            <ChevronRight className="w-5 h-5" />
           </button>
         </div>
 
         {isFuture ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <p>No data for future dates</p>
+          <div className="text-center py-16 text-muted-foreground animate-fade-in">
+            <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
+              <TrendingUp className="w-8 h-8 text-muted-foreground/60" />
+            </div>
+            <p className="font-medium">No data for future dates</p>
+            <p className="text-sm mt-1">Check back later!</p>
           </div>
         ) : (
           <>
             {/* Day Summary */}
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-card rounded-xl border border-border p-4">
-                <div className="flex items-center gap-2 text-nutrition-calories mb-2">
-                  <Utensils className="w-4 h-4" />
+              <div className="bg-card rounded-2xl border border-border/60 p-5 shadow-sm interactive-card animate-slide-up">
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-xl bg-nutrition-calories/10 flex items-center justify-center">
+                    <Utensils className="w-4 h-4 text-nutrition-calories" />
+                  </div>
                   <span className="text-sm font-medium">Nutrition</span>
                 </div>
-                <p className="text-2xl font-display font-bold">{dayTotals.calories}</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-3xl font-display font-bold">{dayTotals.calories}</p>
+                <div className="mt-2 h-1.5 bg-secondary rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-nutrition-calories rounded-full transition-all duration-500"
+                    style={{ width: `${caloriePercent}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
                   / {targets.calories} calories
                 </p>
-                <div className="mt-2">
+                <div className="mt-3 pt-3 border-t border-border/50">
                   <p className="text-sm">
-                    <span className="font-medium">{dayTotals.protein}g</span>
+                    <span className="font-semibold text-nutrition-protein">{dayTotals.protein}g</span>
                     <span className="text-muted-foreground"> / {targets.protein}g protein</span>
                   </p>
                 </div>
               </div>
 
-              <div className="bg-card rounded-xl border border-border p-4">
-                <div className="flex items-center gap-2 text-primary mb-2">
-                  <Dumbbell className="w-4 h-4" />
+              <div className="bg-card rounded-2xl border border-border/60 p-5 shadow-sm interactive-card animate-slide-up" style={{ animationDelay: '50ms' }}>
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Dumbbell className="w-4 h-4 text-primary" />
+                  </div>
                   <span className="text-sm font-medium">Workout</span>
                 </div>
                 {dayWorkout ? (
                   <>
                     <p className="text-2xl font-display font-bold">{dayWorkout.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {dayWorkout.completed ? 'Completed' : 'In progress'}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {dayWorkout.completed ? (
+                        <span className="text-status-success font-medium">Completed</span>
+                      ) : (
+                        'In progress'
+                      )}
                     </p>
-                    <p className="text-sm mt-2">
-                      {dayWorkout.exercises.length} exercises
+                    <p className="text-sm mt-3 pt-3 border-t border-border/50">
+                      <span className="font-semibold">{dayWorkout.exercises.length}</span>
+                      <span className="text-muted-foreground"> exercises</span>
                     </p>
                   </>
                 ) : (
                   <>
-                    <p className="text-xl font-display font-medium text-muted-foreground">Rest</p>
-                    <p className="text-xs text-muted-foreground">No workout logged</p>
+                    <p className="text-xl font-display font-medium text-muted-foreground">Rest Day</p>
+                    <p className="text-xs text-muted-foreground mt-1">No workout logged</p>
+                    <p className="text-sm mt-3 pt-3 border-t border-border/50 text-muted-foreground">
+                      Recovery is key
+                    </p>
                   </>
                 )}
               </div>
@@ -170,19 +198,20 @@ export default function HistoryPage() {
 
             {/* Meals List */}
             {dayMeals.length > 0 && (
-              <div className="mb-6">
-                <h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide mb-3">
+              <div className="mb-6 animate-slide-up" style={{ animationDelay: '100ms' }}>
+                <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wider mb-3 px-1">
                   Meals
                 </h3>
                 <div className="space-y-2">
-                  {dayMeals.map(meal => (
+                  {dayMeals.map((meal, index) => (
                     <div
                       key={meal.id}
-                      className="flex items-center justify-between p-3 bg-card rounded-xl border border-border"
+                      className="flex items-center justify-between p-4 bg-card rounded-xl border border-border/60 shadow-sm hover:shadow-md transition-all duration-200"
+                      style={{ animationDelay: `${(index + 3) * 40}ms` }}
                     >
                       <span className="font-medium">{meal.name}</span>
                       <div className="text-right">
-                        <span className="text-sm">{meal.calories} cal</span>
+                        <span className="text-sm font-semibold">{meal.calories} cal</span>
                         {meal.protein && (
                           <span className="text-xs text-muted-foreground ml-2">
                             {meal.protein}g
@@ -197,30 +226,30 @@ export default function HistoryPage() {
 
             {/* Workout Details */}
             {dayWorkout && (
-              <div>
-                <h3 className="font-medium text-muted-foreground text-sm uppercase tracking-wide mb-3">
+              <div className="animate-slide-up" style={{ animationDelay: '150ms' }}>
+                <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wider mb-3 px-1">
                   Workout Details
                 </h3>
                 <div className="space-y-2">
-                  {dayWorkout.exercises.map(ex => (
+                  {dayWorkout.exercises.map((ex, index) => (
                     <div
                       key={ex.id}
-                      className="p-3 bg-card rounded-xl border border-border"
+                      className="p-4 bg-card rounded-xl border border-border/60 shadow-sm"
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-3">
                         <span className="font-medium">{ex.exercise.name}</span>
                         <span className="text-sm text-muted-foreground">
                           {ex.sets.filter(s => s.completed).length}/{ex.sets.length} sets
                         </span>
                       </div>
-                      <div className="flex gap-2 mt-2">
+                      <div className="flex gap-2 flex-wrap">
                         {ex.sets.map((set, i) => (
                           <span
                             key={set.id}
-                            className={`text-xs px-2 py-1 rounded ${
+                            className={`text-xs px-2.5 py-1 rounded-lg font-medium transition-colors ${
                               set.completed 
                                 ? 'bg-primary-muted text-primary' 
-                                : 'bg-muted text-muted-foreground'
+                                : 'bg-secondary text-muted-foreground'
                             }`}
                           >
                             {set.reps}×{set.weight}kg
@@ -234,8 +263,12 @@ export default function HistoryPage() {
             )}
 
             {dayMeals.length === 0 && !dayWorkout && (
-              <div className="text-center py-12 text-muted-foreground">
-                <p>No activity logged for this day</p>
+              <div className="text-center py-16 text-muted-foreground animate-fade-in">
+                <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
+                  <TrendingUp className="w-8 h-8 text-muted-foreground/60" />
+                </div>
+                <p className="font-medium">No activity logged</p>
+                <p className="text-sm mt-1">This day is still empty</p>
               </div>
             )}
           </>
