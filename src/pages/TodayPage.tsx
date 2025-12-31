@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, X, Search, Flame, Beef } from "lucide-react";
+import { Plus, X, Search, Flame, Beef, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -90,7 +90,7 @@ export default function TodayPage() {
   const showAdjustment = caloriesRemaining < -200;
 
   return (
-    <div className="min-h-screen bg-background pb-24">
+    <div className="min-h-screen bg-background pb-24 gradient-mesh">
       <div className="max-w-lg mx-auto px-4">
         <PageHeader 
           title="Today" 
@@ -102,40 +102,48 @@ export default function TodayPage() {
         />
 
         {/* Progress Rings */}
-        <div className="flex justify-center gap-8 py-6">
+        <div className="flex justify-center gap-10 py-8 animate-scale-in">
           <div className="text-center">
-            <ProgressRing 
-              progress={caloriesProgress} 
-              size={100}
-              progressClassName="stroke-nutrition-calories"
-            >
-              <div>
-                <Flame className="w-5 h-5 mx-auto text-nutrition-calories mb-0.5" />
-                <span className="text-xs text-muted-foreground">cal</span>
-              </div>
-            </ProgressRing>
-            <div className="mt-3">
-              <p className="font-display font-bold text-lg">{totals.calories}</p>
-              <p className="text-xs text-muted-foreground">
+            <div className="relative">
+              <ProgressRing 
+                progress={caloriesProgress} 
+                size={110}
+                strokeWidth={10}
+                progressClassName="stroke-nutrition-calories"
+              >
+                <div className="flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-xl bg-nutrition-calories/10 flex items-center justify-center mb-1">
+                    <Flame className="w-5 h-5 text-nutrition-calories" />
+                  </div>
+                </div>
+              </ProgressRing>
+            </div>
+            <div className="mt-4">
+              <p className="font-display font-bold text-2xl">{totals.calories}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {caloriesRemaining > 0 ? `${caloriesRemaining} left` : `${Math.abs(caloriesRemaining)} over`}
               </p>
             </div>
           </div>
 
           <div className="text-center">
-            <ProgressRing 
-              progress={proteinProgress} 
-              size={100}
-              progressClassName="stroke-nutrition-protein"
-            >
-              <div>
-                <Beef className="w-5 h-5 mx-auto text-nutrition-protein mb-0.5" />
-                <span className="text-xs text-muted-foreground">prot</span>
-              </div>
-            </ProgressRing>
-            <div className="mt-3">
-              <p className="font-display font-bold text-lg">{totals.protein}g</p>
-              <p className="text-xs text-muted-foreground">
+            <div className="relative">
+              <ProgressRing 
+                progress={proteinProgress} 
+                size={110}
+                strokeWidth={10}
+                progressClassName="stroke-nutrition-protein"
+              >
+                <div className="flex flex-col items-center">
+                  <div className="w-10 h-10 rounded-xl bg-nutrition-protein/10 flex items-center justify-center mb-1">
+                    <Beef className="w-5 h-5 text-nutrition-protein" />
+                  </div>
+                </div>
+              </ProgressRing>
+            </div>
+            <div className="mt-4">
+              <p className="font-display font-bold text-2xl">{totals.protein}g</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
                 {proteinRemaining > 0 ? `${proteinRemaining}g left` : 'Target hit!'}
               </p>
             </div>
@@ -144,31 +152,40 @@ export default function TodayPage() {
 
         {/* Smart Adjustment */}
         {showAdjustment && (
-          <div className="bg-accent/10 border border-accent/30 rounded-xl p-4 mb-6 animate-slide-up">
-            <p className="text-sm">
-              <span className="font-medium">No stress!</span> You're {Math.abs(caloriesRemaining)} calories over. 
-              Consider a lighter day tomorrow or a longer walk.
-            </p>
+          <div className="bg-accent/10 border border-accent/30 rounded-2xl p-4 mb-6 animate-slide-up flex items-start gap-3">
+            <div className="w-8 h-8 rounded-xl bg-accent/20 flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-4 h-4 text-accent" />
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-1">Don't stress!</p>
+              <p className="text-sm text-muted-foreground">
+                You're {Math.abs(caloriesRemaining)} calories over. Consider a lighter day tomorrow or a longer walk.
+              </p>
+            </div>
           </div>
         )}
 
         {/* Meals List */}
         <div className="space-y-3 mb-6">
-          <div className="flex items-center justify-between">
-            <h2 className="font-medium text-muted-foreground text-sm uppercase tracking-wide">Meals</h2>
+          <div className="flex items-center justify-between px-1">
+            <h2 className="font-medium text-muted-foreground text-xs uppercase tracking-wider">Meals</h2>
             <span className="text-xs text-muted-foreground">{meals.length} logged</span>
           </div>
 
           {meals.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No meals logged yet</p>
-              <p className="text-sm">Tap + to add your first meal</p>
+            <div className="text-center py-12 text-muted-foreground animate-fade-in">
+              <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
+                <Plus className="w-8 h-8 text-muted-foreground/60" />
+              </div>
+              <p className="font-medium">No meals logged yet</p>
+              <p className="text-sm mt-1">Tap below to add your first meal</p>
             </div>
           ) : (
-            meals.map(meal => (
+            meals.map((meal, index) => (
               <div 
                 key={meal.id}
-                className="flex items-center justify-between p-4 bg-card rounded-xl border border-border animate-fade-in"
+                className="flex items-center justify-between p-4 bg-card rounded-2xl border border-border/60 shadow-sm animate-slide-up hover:shadow-md transition-all duration-200"
+                style={{ animationDelay: `${index * 50}ms` }}
               >
                 <div>
                   <p className="font-medium">{meal.name}</p>
@@ -178,7 +195,7 @@ export default function TodayPage() {
                 </div>
                 <button
                   onClick={() => handleDeleteMeal(meal.id)}
-                  className="p-2 text-muted-foreground hover:text-destructive transition-colors"
+                  className="p-2.5 rounded-xl text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all duration-200"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -190,51 +207,51 @@ export default function TodayPage() {
         {/* Add Meal Dialog */}
         <Dialog open={isAddingMeal} onOpenChange={setIsAddingMeal}>
           <DialogTrigger asChild>
-            <Button size="lg" className="w-full h-14">
+            <Button size="xl" className="w-full shadow-lg shadow-primary/20 glow-primary">
               <Plus className="w-5 h-5 mr-2" />
               Add Meal
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-sm mx-auto">
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>Add Meal</DialogTitle>
             </DialogHeader>
 
             {showSuggestions && (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     placeholder="Search common foods..."
-                    className="pl-10"
+                    className="pl-11 h-12 rounded-xl"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
                   />
                 </div>
 
-                <div className="max-h-48 overflow-y-auto space-y-1">
+                <div className="max-h-52 overflow-y-auto space-y-1 -mx-1 px-1">
                   {filteredFoods.slice(0, 8).map(food => (
                     <button
                       key={food.name}
                       onClick={() => handleQuickAdd(food)}
-                      className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-secondary transition-colors text-left"
+                      className="w-full flex items-center justify-between p-3.5 rounded-xl hover:bg-secondary transition-all duration-200 text-left active:scale-[0.98]"
                     >
                       <div>
                         <p className="font-medium text-sm">{food.name}</p>
                         <p className="text-xs text-muted-foreground">{food.servingSize}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-sm font-medium">{food.calories}</p>
+                        <p className="text-sm font-semibold">{food.calories}</p>
                         <p className="text-xs text-muted-foreground">{food.protein}g</p>
                       </div>
                     </button>
                   ))}
                 </div>
 
-                <div className="border-t pt-3">
+                <div className="border-t border-border pt-4">
                   <button
                     onClick={() => setShowSuggestions(false)}
-                    className="text-sm text-primary hover:underline"
+                    className="text-sm text-primary hover:text-primary/80 font-medium transition-colors"
                   >
                     Or enter manually →
                   </button>
@@ -243,39 +260,39 @@ export default function TodayPage() {
             )}
 
             {!showSuggestions && (
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
-                  <Label htmlFor="meal-name">Meal name</Label>
+                  <Label htmlFor="meal-name" className="text-sm font-medium">Meal name</Label>
                   <Input
                     id="meal-name"
                     placeholder="e.g., Chicken with rice"
                     value={mealName}
                     onChange={e => setMealName(e.target.value)}
-                    className="mt-1.5"
+                    className="mt-2 h-12 rounded-xl"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="calories">Calories</Label>
+                    <Label htmlFor="calories" className="text-sm font-medium">Calories</Label>
                     <Input
                       id="calories"
                       type="number"
                       placeholder="500"
                       value={mealCalories}
                       onChange={e => setMealCalories(e.target.value)}
-                      className="mt-1.5"
+                      className="mt-2 h-12 rounded-xl"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="protein">Protein (g)</Label>
+                    <Label htmlFor="protein" className="text-sm font-medium">Protein (g)</Label>
                     <Input
                       id="protein"
                       type="number"
                       placeholder="30"
                       value={mealProtein}
                       onChange={e => setMealProtein(e.target.value)}
-                      className="mt-1.5"
+                      className="mt-2 h-12 rounded-xl"
                     />
                   </div>
                 </div>
@@ -283,6 +300,7 @@ export default function TodayPage() {
                 <div className="flex gap-3 pt-2">
                   <Button
                     variant="outline"
+                    size="lg"
                     className="flex-1"
                     onClick={() => {
                       setShowSuggestions(true);
@@ -293,8 +311,8 @@ export default function TodayPage() {
                   >
                     Back
                   </Button>
-                  <Button className="flex-1" onClick={handleAddMeal}>
-                    Add
+                  <Button size="lg" className="flex-1" onClick={handleAddMeal}>
+                    Add Meal
                   </Button>
                 </div>
               </div>
