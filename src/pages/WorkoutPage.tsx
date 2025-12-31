@@ -1,18 +1,22 @@
 import { useState, useMemo } from "react";
-import { Check, Plus, Minus, Coffee, Dumbbell, Calendar, Play, Trophy } from "lucide-react";
+import { Check, Plus, Minus, Coffee, Dumbbell, Calendar, Play, Trophy, Search, X, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   getWorkoutByDate, 
   saveWorkout, 
   getTodayDate, 
   generateId,
   DEFAULT_EXERCISES,
+  ALL_EXERCISES,
   getUserProfile,
   getTodayPlannedWorkout
 } from "@/lib/storage";
-import { Workout, WorkoutType, WorkoutExercise } from "@/lib/types";
+import { Workout, WorkoutType, WorkoutExercise, Exercise } from "@/lib/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -23,14 +27,25 @@ const WORKOUT_TYPES: { id: WorkoutType; label: string; emoji: string }[] = [
   { id: 'full-body', label: 'Full Body', emoji: '⚡' },
   { id: 'upper', label: 'Upper Body', emoji: '🏋️' },
   { id: 'lower', label: 'Lower Body', emoji: '🦿' },
+  { id: 'custom', label: 'Custom', emoji: '✨' },
   { id: 'rest', label: 'Rest Day', emoji: '😴' },
 ];
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+// Group exercises by muscle group
+const EXERCISE_GROUPS = ALL_EXERCISES.reduce((acc, ex) => {
+  if (!acc[ex.muscleGroup]) acc[ex.muscleGroup] = [];
+  acc[ex.muscleGroup].push(ex);
+  return acc;
+}, {} as Record<string, typeof ALL_EXERCISES>);
+
 export default function WorkoutPage() {
   const [workout, setWorkout] = useState<Workout | null>(() => getWorkoutByDate(getTodayDate()));
   const [isActive, setIsActive] = useState(false);
+  const [showCustomBuilder, setShowCustomBuilder] = useState(false);
+  const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
+  const [exerciseSearch, setExerciseSearch] = useState("");
   
   const profile = getUserProfile();
   const isCoachUser = profile?.experienceLevel === 'new' && profile?.coachProfile;
@@ -50,6 +65,20 @@ export default function WorkoutPage() {
     return workout.exercises.reduce((acc, ex) => acc + ex.sets.length, 0);
   }, [workout]);
 
+  const filteredExercises = useMemo(() => {
+    if (!exerciseSearch.trim()) return EXERCISE_GROUPS;
+    const search = exerciseSearch.toLowerCase();
+    const filtered: Record<string, typeof ALL_EXERCISES> = {};
+    Object.entries(EXERCISE_GROUPS).forEach(([group, exercises]) => {
+      const matching = exercises.filter(ex => 
+        ex.name.toLowerCase().includes(search) || 
+        ex.muscleGroup.toLowerCase().includes(search)
+      );
+      if (matching.length > 0) filtered[group] = matching;
+    });
+    return filtered;
+  }, [exerciseSearch]);
+
   const getExercisesForType = (type: WorkoutType) => {
     if (type === 'upper') {
       return [...(DEFAULT_EXERCISES.push || []), ...(DEFAULT_EXERCISES.pull || []).slice(0, 2)];
@@ -58,6 +87,56 @@ export default function WorkoutPage() {
       return DEFAULT_EXERCISES.legs || [];
     }
     return DEFAULT_EXERCISES[type as keyof typeof DEFAULT_EXERCISES] || [];
+  };
+
+  const handleWorkoutTypeClick = (type: WorkoutType) => {
+    if (type === 'custom') {
+      setShowCustomBuilder(true);
+      return;
+    }
+    startWorkout(type);
+  };
+
+  const toggleExerciseSelection = (exercise: Exercise) => {
+    setSelectedExercises(prev => {
+      const exists = prev.find(e => e.id === exercise.id);
+      if (exists) return prev.filter(e => e.id !== exercise.id);
+      return [...prev, exercise];
+    });
+  };
+
+  const startCustomWorkout = () => {
+    if (selectedExercises.length === 0) {
+      toast.error("Select at least one exercise");
+      return;
+    }
+    
+    const workoutExercises: WorkoutExercise[] = selectedExercises.map(ex => ({
+      id: generateId(),
+      exercise: ex,
+      sets: Array.from({ length: 3 }, () => ({
+        id: generateId(),
+        reps: 10,
+        weight: 0,
+        completed: false,
+      })),
+    }));
+    
+    const newWorkout: Workout = {
+      id: generateId(),
+      date: getTodayDate(),
+      type: 'custom',
+      name: 'Custom Workout',
+      exercises: workoutExercises,
+      completed: false,
+    };
+    
+    setWorkout(newWorkout);
+    setIsActive(true);
+    saveWorkout(newWorkout);
+    setShowCustomBuilder(false);
+    setSelectedExercises([]);
+    setExerciseSearch("");
   };
 
   const startWorkout = (type: WorkoutType) => {
@@ -126,6 +205,95 @@ export default function WorkoutPage() {
     toast.success("Workout complete! Great job 💪");
   };
 
+  // Custom workout builder dialog
+  const CustomBuilderDialog = (
+    <Dialog open={showCustomBuilder} onOpenChange={setShowCustomBuilder}>
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-accent" />
+            Build Custom Workout
+          </DialogTitle>
+        </DialogHeader>
+        
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search exercises..."
+            value={exerciseSearch}
+            onChange={(e) => setExerciseSearch(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {selectedExercises.length > 0 && (
+          <div className="mb-4 p-3 bg-primary/10 rounded-xl border border-primary/20">
+            <p className="text-sm font-medium mb-2 text-primary">Selected ({selectedExercises.length})</p>
+            <div className="flex flex-wrap gap-2">
+              {selectedExercises.map(ex => (
+                <button
+                  key={ex.id}
+                  onClick={() => toggleExerciseSelection(ex)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-primary text-primary-foreground rounded-full text-sm font-medium hover:bg-primary/90 transition-colors"
+                >
+                  {ex.name}
+                  <X className="w-3 h-3" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <ScrollArea className="flex-1 -mx-6 px-6">
+          <div className="space-y-4 pb-4">
+            {Object.entries(filteredExercises).map(([group, exercises]) => (
+              <div key={group}>
+                <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{group}</h4>
+                <div className="space-y-1">
+                  {exercises.map(ex => {
+                    const isSelected = selectedExercises.some(s => s.id === ex.id);
+                    return (
+                      <button
+                        key={ex.id}
+                        onClick={() => toggleExerciseSelection(ex)}
+                        className={cn(
+                          "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left",
+                          isSelected 
+                            ? "bg-primary/10 border border-primary/30" 
+                            : "bg-secondary/50 hover:bg-secondary border border-transparent"
+                        )}
+                      >
+                        <div className={cn(
+                          "w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all",
+                          isSelected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30"
+                        )}>
+                          {isSelected && <Check className="w-3.5 h-3.5" />}
+                        </div>
+                        <span className="font-medium">{ex.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+
+        <div className="pt-4 border-t border-border/60">
+          <Button 
+            size="lg" 
+            className="w-full" 
+            onClick={startCustomWorkout}
+            disabled={selectedExercises.length === 0}
+          >
+            <Play className="w-4 h-4 mr-2" />
+            Start Workout ({selectedExercises.length} exercises)
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+
   if (isCoachUser && todayPlan?.isRestDay && !workout && !isActive) {
     return (
       <div className="min-h-screen bg-background pb-24 gradient-mesh">
@@ -143,6 +311,7 @@ export default function WorkoutPage() {
           </div>
         </div>
         <BottomNav />
+        {CustomBuilderDialog}
       </div>
     );
   }
@@ -174,9 +343,18 @@ export default function WorkoutPage() {
                 <Play className="w-5 h-5 mr-2" /> Start Workout
               </Button>
             </div>
+            
+            <button
+              onClick={() => setShowCustomBuilder(true)}
+              className="w-full p-4 rounded-2xl bg-card/50 border border-dashed border-border/60 hover:border-accent/40 hover:bg-accent/5 transition-all duration-300 text-center"
+            >
+              <span className="text-muted-foreground">or </span>
+              <span className="font-medium text-accent">build a custom workout</span>
+            </button>
           </div>
         </div>
         <BottomNav />
+        {CustomBuilderDialog}
       </div>
     );
   }
@@ -190,18 +368,23 @@ export default function WorkoutPage() {
             {WORKOUT_TYPES.map((type, index) => (
               <button
                 key={type.id}
-                onClick={() => startWorkout(type.id)}
-                className="p-6 rounded-2xl bg-card border border-border/60 hover:border-primary/40 hover:shadow-lg transition-all duration-300 text-left animate-slide-up active:scale-[0.98]"
+                onClick={() => handleWorkoutTypeClick(type.id)}
+                className={cn(
+                  "p-6 rounded-2xl bg-card border border-border/60 hover:border-primary/40 hover:shadow-lg transition-all duration-300 text-left animate-slide-up active:scale-[0.98]",
+                  type.id === 'custom' && "border-dashed hover:border-accent/40 hover:bg-accent/5"
+                )}
                 style={{ animationDelay: `${index * 40}ms` }}
               >
                 <span className="text-3xl mb-3 block">{type.emoji}</span>
                 <h3 className="font-semibold">{type.label}</h3>
-                {type.id !== 'rest' && <p className="text-xs text-muted-foreground mt-1">{getExercisesForType(type.id).length} exercises</p>}
+                {type.id === 'custom' && <p className="text-xs text-accent mt-1">Build your own</p>}
+                {type.id !== 'rest' && type.id !== 'custom' && <p className="text-xs text-muted-foreground mt-1">{getExercisesForType(type.id).length} exercises</p>}
               </button>
             ))}
           </div>
         </div>
         <BottomNav />
+        {CustomBuilderDialog}
       </div>
     );
   }
