@@ -208,7 +208,7 @@ export default function WorkoutPage() {
   // Custom workout builder dialog
   const CustomBuilderDialog = (
     <Dialog open={showCustomBuilder} onOpenChange={setShowCustomBuilder}>
-      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-accent" />
@@ -244,8 +244,8 @@ export default function WorkoutPage() {
           </div>
         )}
 
-        <ScrollArea className="flex-1 -mx-6 px-6">
-          <div className="space-y-4 pb-4">
+        <ScrollArea className="flex-1 min-h-0 -mx-6 px-6">
+          <div className="space-y-4 pb-4 pr-2">
             {Object.entries(filteredExercises).map(([group, exercises]) => (
               <div key={group}>
                 <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">{group}</h4>
