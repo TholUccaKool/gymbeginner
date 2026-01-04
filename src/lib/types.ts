@@ -11,6 +11,8 @@ export interface UserProfile {
   // Training schedule (for experienced users or set during onboarding)
   trainingDays?: number; // per week
   workoutDays?: number[]; // 0=Sunday, 1=Monday, ..., 6=Saturday
+  // Premium subscription status
+  isPremium?: boolean;
 }
 
 export interface CoachProfile {
