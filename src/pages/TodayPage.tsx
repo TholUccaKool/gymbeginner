@@ -1,11 +1,12 @@
 import { useState, useMemo } from "react";
-import { Plus, X, Search, Flame, Beef, Sparkles } from "lucide-react";
+import { Plus, X, Search, Flame, Beef, Sparkles, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProgressRing } from "@/components/ui/progress-ring";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { PremiumPaywall, usePremiumGate } from "@/components/PremiumPaywall";
 import { 
   getUserProfile, 
   getMealsByDate, 
@@ -34,7 +35,7 @@ export default function TodayPage() {
   const [mealProtein, setMealProtein] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(true);
-
+  const { showPaywall, setShowPaywall, paywallFeature, checkPremium, isPremium } = usePremiumGate();
   const profile = getUserProfile();
   const targets = profile?.nutritionTargets ?? { calories: 2000, protein: 150 };
   const totals = useMemo(() => getDailyNutritionTotals(getTodayDate()), [meals]);
@@ -86,8 +87,8 @@ export default function TodayPage() {
     toast.success('Meal removed');
   };
 
-  // Smart adjustment suggestion
-  const showAdjustment = caloriesRemaining < -200;
+  // Smart adjustment suggestion (Premium feature)
+  const showAdjustment = caloriesRemaining < -200 && isPremium();
 
   return (
     <div className="min-h-screen bg-background pb-24 gradient-mesh">
@@ -320,6 +321,12 @@ export default function TodayPage() {
           </DialogContent>
         </Dialog>
       </div>
+
+      <PremiumPaywall 
+        open={showPaywall} 
+        onOpenChange={setShowPaywall} 
+        feature={paywallFeature}
+      />
 
       <BottomNav />
     </div>
