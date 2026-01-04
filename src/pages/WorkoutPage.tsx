@@ -498,7 +498,7 @@ export default function WorkoutPage() {
     <div className="min-h-screen bg-background pb-32 gradient-mesh">
       <div className="max-w-lg mx-auto px-4">
         <PageHeader title={workout?.name ?? "Workout"} subtitle={`${completedSets}/${totalSets} sets completed`} />
-        <div className="space-y-4 mt-4">
+        <div className="space-y-4 mt-4 pb-24">
           {workout?.exercises.map((ex, exIndex) => (
             <div key={ex.id} className="bg-card rounded-2xl border border-border/60 overflow-hidden shadow-sm animate-slide-up" style={{ animationDelay: `${exIndex * 50}ms` }}>
               <div className="p-4 border-b border-border/60">
