@@ -116,24 +116,24 @@ export const saveWeeklyPlan = (plan: WeeklyPlan): void => {
 // Get today's planned workout based on user's training schedule
 export const getTodayPlannedWorkout = (): { type: WorkoutType; isRestDay: boolean } | null => {
   const profile = getUserProfile();
-  if (!profile?.coachProfile) return null;
-  
-  const trainingDays = profile.coachProfile.trainingDays;
   const dayOfWeek = new Date().getDay(); // 0 = Sunday, 6 = Saturday
   
-  // Generate a workout schedule based on training days
-  // Spread workouts evenly across the week with rest days
-  const schedule = generateWorkoutSchedule(trainingDays);
+  // Check for user-selected workout days (both experienced and new users)
+  const workoutDays = profile?.workoutDays ?? profile?.coachProfile?.workoutDays;
+  const trainingDays = profile?.trainingDays ?? profile?.coachProfile?.trainingDays;
   
-  return schedule[dayOfWeek];
-};
-
-// Generate workout schedule based on training days per week
-const generateWorkoutSchedule = (trainingDays: number): { type: WorkoutType; isRestDay: boolean }[] => {
-  const week: { type: WorkoutType; isRestDay: boolean }[] = [];
+  if (!workoutDays || !trainingDays) return null;
   
-  // Workout rotation based on number of training days
+  // Check if today is a workout day
+  const isWorkoutDay = workoutDays.includes(dayOfWeek);
+  
+  if (!isWorkoutDay) {
+    return { type: 'rest', isRestDay: true };
+  }
+  
+  // Generate workout type based on position in the week
   const workoutRotations: Record<number, WorkoutType[]> = {
+    1: ['full-body'],
     2: ['full-body', 'full-body'],
     3: ['push', 'pull', 'legs'],
     4: ['push', 'pull', 'legs', 'upper'],
@@ -142,30 +142,16 @@ const generateWorkoutSchedule = (trainingDays: number): { type: WorkoutType; isR
     7: ['push', 'pull', 'legs', 'push', 'pull', 'legs', 'full-body'],
   };
   
-  // Map training days to workout days (spread evenly)
-  const workoutDaysMap: Record<number, number[]> = {
-    2: [1, 4], // Mon, Thu
-    3: [1, 3, 5], // Mon, Wed, Fri
-    4: [1, 2, 4, 5], // Mon, Tue, Thu, Fri
-    5: [1, 2, 3, 5, 6], // Mon-Wed, Fri, Sat
-    6: [1, 2, 3, 4, 5, 6], // Mon-Sat
-    7: [0, 1, 2, 3, 4, 5, 6], // Every day
-  };
-  
-  const workoutDays = workoutDaysMap[trainingDays] || workoutDaysMap[3];
   const rotation = workoutRotations[trainingDays] || workoutRotations[3];
   
-  let workoutIndex = 0;
-  for (let day = 0; day < 7; day++) {
-    if (workoutDays.includes(day)) {
-      week[day] = { type: rotation[workoutIndex % rotation.length], isRestDay: false };
-      workoutIndex++;
-    } else {
-      week[day] = { type: 'rest', isRestDay: true };
-    }
-  }
+  // Find which workout in the rotation today is
+  const sortedWorkoutDays = [...workoutDays].sort((a, b) => a - b);
+  const workoutIndex = sortedWorkoutDays.indexOf(dayOfWeek);
   
-  return week;
+  return { 
+    type: rotation[workoutIndex % rotation.length], 
+    isRestDay: false 
+  };
 };
 
 // Calculate daily nutrition totals

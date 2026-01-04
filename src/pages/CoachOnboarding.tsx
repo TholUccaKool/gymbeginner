@@ -7,7 +7,17 @@ import { getUserProfile, saveUserProfile } from "@/lib/storage";
 import { CoachProfile } from "@/lib/types";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 
-type Step = 'goal' | 'physique' | 'body' | 'training' | 'generating';
+type Step = 'goal' | 'physique' | 'body' | 'training' | 'selectDays' | 'generating';
+
+const WEEKDAYS = [
+  { id: 0, label: 'Sun' },
+  { id: 1, label: 'Mon' },
+  { id: 2, label: 'Tue' },
+  { id: 3, label: 'Wed' },
+  { id: 4, label: 'Thu' },
+  { id: 5, label: 'Fri' },
+  { id: 6, label: 'Sat' },
+];
 
 const GOALS = [
   { id: 'healthier', label: 'Get Healthier', desc: 'General wellness improvement' },
@@ -193,10 +203,12 @@ export default function CoachOnboarding() {
             <p className="text-muted-foreground text-sm mb-6">How many days can you realistically train?</p>
             
             <div className="grid grid-cols-4 gap-2 mb-6">
-              {[2, 3, 4, 5, 6].map(days => (
+              {[1, 2, 3, 4, 5, 6, 7].map(days => (
                 <button
                   key={days}
-                  onClick={() => updateProfile({ trainingDays: days })}
+                  onClick={() => {
+                    updateProfile({ trainingDays: days, workoutDays: [] });
+                  }}
                   className={`p-4 rounded-xl border transition-all ${
                     coachProfile.trainingDays === days 
                       ? 'border-primary bg-primary-muted' 
@@ -204,15 +216,70 @@ export default function CoachOnboarding() {
                   }`}
                 >
                   <span className="text-lg font-bold">{days}</span>
-                  <span className="text-xs text-muted-foreground block">days</span>
+                  <span className="text-xs text-muted-foreground block">day{days > 1 ? 's' : ''}</span>
                 </button>
               ))}
             </div>
 
             <Button 
               className="w-full"
-              onClick={handleComplete}
+              onClick={() => setStep('selectDays')}
               disabled={!coachProfile.trainingDays}
+            >
+              Continue <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
+        );
+
+      case 'selectDays':
+        const selectedDays = coachProfile.workoutDays || [];
+        const maxDays = coachProfile.trainingDays || 0;
+        
+        const toggleDay = (dayId: number) => {
+          if (selectedDays.includes(dayId)) {
+            updateProfile({ workoutDays: selectedDays.filter(d => d !== dayId) });
+          } else if (selectedDays.length < maxDays) {
+            updateProfile({ workoutDays: [...selectedDays, dayId] });
+          }
+        };
+        
+        return (
+          <div className="animate-slide-up">
+            <h2 className="text-xl font-display font-bold mb-2">Which days do you want to train?</h2>
+            <p className="text-muted-foreground text-sm mb-6">
+              Select exactly {maxDays} day{maxDays > 1 ? 's' : ''} ({selectedDays.length}/{maxDays} selected)
+            </p>
+            
+            <div className="grid grid-cols-7 gap-1.5 mb-6">
+              {WEEKDAYS.map(day => {
+                const isSelected = selectedDays.includes(day.id);
+                const isDisabled = !isSelected && selectedDays.length >= maxDays;
+                
+                return (
+                  <button
+                    key={day.id}
+                    onClick={() => toggleDay(day.id)}
+                    disabled={isDisabled}
+                    className={`p-3 rounded-xl border transition-all text-center ${
+                      isSelected
+                        ? 'border-primary bg-primary-muted'
+                        : isDisabled
+                          ? 'border-border bg-card opacity-40 cursor-not-allowed'
+                          : 'border-border bg-card hover:border-primary/50'
+                    }`}
+                  >
+                    <span className={`text-sm font-medium ${isSelected ? 'text-primary' : ''}`}>
+                      {day.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <Button 
+              className="w-full"
+              onClick={handleComplete}
+              disabled={selectedDays.length !== maxDays}
             >
               Create My Plan <Check className="w-4 h-4 ml-2" />
             </Button>
@@ -238,7 +305,7 @@ export default function CoachOnboarding() {
         {step !== 'generating' && step !== 'goal' && (
           <button
             onClick={() => {
-              const steps: Step[] = ['goal', 'physique', 'body', 'training'];
+              const steps: Step[] = ['goal', 'physique', 'body', 'training', 'selectDays'];
               const currentIndex = steps.indexOf(step);
               if (currentIndex > 0) setStep(steps[currentIndex - 1]);
             }}
