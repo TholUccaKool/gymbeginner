@@ -8,6 +8,9 @@ export interface UserProfile {
   coachProfile?: CoachProfile;
   // Nutrition targets
   nutritionTargets: NutritionTargets;
+  // Training schedule (for experienced users or set during onboarding)
+  trainingDays?: number; // per week
+  workoutDays?: number[]; // 0=Sunday, 1=Monday, ..., 6=Saturday
 }
 
 export interface CoachProfile {
@@ -17,6 +20,7 @@ export interface CoachProfile {
   height: number; // cm
   weight: number; // kg
   trainingDays: number; // per week
+  workoutDays?: number[]; // 0=Sunday, 1=Monday, ..., 6=Saturday
   equipment?: 'full-gym' | 'home-basic' | 'bodyweight';
   injuries?: string;
   dietPreference?: 'no-restriction' | 'vegetarian' | 'vegan' | 'keto';
