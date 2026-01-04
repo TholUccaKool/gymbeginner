@@ -5,9 +5,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { getUserProfile, saveUserProfile } from "@/lib/storage";
 import { CoachProfile } from "@/lib/types";
-import { ArrowLeft, ArrowRight, Check } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Crown, Lock } from "lucide-react";
+import { PremiumPaywall, usePremiumGate } from "@/components/PremiumPaywall";
 
-type Step = 'goal' | 'physique' | 'body' | 'training' | 'selectDays' | 'generating';
+type Step = 'goal' | 'physique' | 'body' | 'training' | 'selectDays' | 'preview' | 'generating';
 
 const WEEKDAYS = [
   { id: 0, label: 'Sun' },
@@ -37,6 +38,7 @@ export default function CoachOnboarding() {
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>('goal');
   const [coachProfile, setCoachProfile] = useState<Partial<CoachProfile>>({});
+  const { showPaywall, setShowPaywall, paywallFeature, checkPremium, isPremium } = usePremiumGate();
 
   const updateProfile = (updates: Partial<CoachProfile>) => {
     setCoachProfile(prev => ({ ...prev, ...updates }));
@@ -70,7 +72,16 @@ export default function CoachOnboarding() {
     };
   };
 
-  const handleComplete = () => {
+  const handleShowPreview = () => {
+    setStep('preview');
+  };
+
+  const handleGeneratePlan = () => {
+    // Premium gate - only premium users can generate full plan
+    if (!checkPremium("AI Coach Plan Generation")) {
+      return;
+    }
+    
     setStep('generating');
     
     // Simulate AI generation delay
@@ -278,11 +289,95 @@ export default function CoachOnboarding() {
 
             <Button 
               className="w-full"
-              onClick={handleComplete}
+              onClick={handleShowPreview}
               disabled={selectedDays.length !== maxDays}
             >
-              Create My Plan <Check className="w-4 h-4 ml-2" />
+              See My Preview <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
+          </div>
+        );
+
+      case 'preview':
+        const previewTargets = coachProfile.goal && coachProfile.age && coachProfile.height && coachProfile.weight && coachProfile.trainingDays
+          ? calculateTargets(coachProfile as CoachProfile)
+          : { calories: 2000, protein: 140 };
+        
+        return (
+          <div className="animate-slide-up">
+            <h2 className="text-xl font-display font-bold mb-2">Your Personalized Preview</h2>
+            <p className="text-muted-foreground text-sm mb-6">Based on your answers, here's what we recommend</p>
+            
+            {/* Preview Cards */}
+            <div className="space-y-3 mb-6">
+              <div className="p-4 rounded-xl bg-card border border-border">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Daily Calories</p>
+                <p className="text-2xl font-bold">{previewTargets.calories.toLocaleString()} kcal</p>
+              </div>
+              
+              <div className="p-4 rounded-xl bg-card border border-border">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Daily Protein</p>
+                <p className="text-2xl font-bold">{previewTargets.protein}g</p>
+              </div>
+              
+              <div className="p-4 rounded-xl bg-card border border-border">
+                <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Training Days</p>
+                <p className="text-2xl font-bold">{coachProfile.trainingDays} days/week</p>
+              </div>
+            </div>
+
+            {/* Premium Benefits */}
+            {!isPremium() && (
+              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 mb-6">
+                <div className="flex items-center gap-2 mb-3">
+                  <Crown className="w-5 h-5 text-primary" />
+                  <p className="font-semibold text-sm">Premium unlocks:</p>
+                </div>
+                <ul className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    Full personalized workout plan
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    Auto-adjusted nutrition targets
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    Weekly AI progress adjustments
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <Check className="w-4 h-4 text-primary" />
+                    Ongoing coach recommendations
+                  </li>
+                </ul>
+              </div>
+            )}
+
+            {/* Action Buttons */}
+            <div className="space-y-3">
+              <Button 
+                className="w-full"
+                onClick={handleGeneratePlan}
+              >
+                {isPremium() ? (
+                  <>Generate My Full Plan <Check className="w-4 h-4 ml-2" /></>
+                ) : (
+                  <>
+                    <Lock className="w-4 h-4 mr-2" />
+                    Unlock Full Plan
+                  </>
+                )}
+              </Button>
+              
+              {!isPremium() && (
+                <button
+                  onClick={() => navigate('/today')}
+                  className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
+                >
+                  Continue with basic tracking
+                </button>
+              )}
+            </div>
           </div>
         );
 
@@ -305,7 +400,7 @@ export default function CoachOnboarding() {
         {step !== 'generating' && step !== 'goal' && (
           <button
             onClick={() => {
-              const steps: Step[] = ['goal', 'physique', 'body', 'training', 'selectDays'];
+              const steps: Step[] = ['goal', 'physique', 'body', 'training', 'selectDays', 'preview'];
               const currentIndex = steps.indexOf(step);
               if (currentIndex > 0) setStep(steps[currentIndex - 1]);
             }}
@@ -318,6 +413,12 @@ export default function CoachOnboarding() {
         
         {renderStep()}
       </div>
+      
+      <PremiumPaywall 
+        open={showPaywall} 
+        onOpenChange={setShowPaywall} 
+        feature={paywallFeature}
+      />
     </div>
   );
 }
