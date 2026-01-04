@@ -17,10 +17,10 @@ interface PremiumPaywallProps {
 }
 
 const PREMIUM_FEATURES = [
-  { icon: Brain, label: "AI Coach with personalized guidance" },
-  { icon: TrendingUp, label: "Smart weekly calorie & protein adjustments" },
-  { icon: Sparkles, label: "Auto workout progression" },
-  { icon: Crown, label: "Advanced insights & recommendations" },
+  { icon: Brain, label: "Apply & save your personalized plan" },
+  { icon: Sparkles, label: "Regenerate plans when goals change" },
+  { icon: TrendingUp, label: "Weekly workout & nutrition adjustments" },
+  { icon: Crown, label: "Ongoing AI coaching guidance" },
 ];
 
 export function PremiumPaywall({ open, onOpenChange, feature }: PremiumPaywallProps) {
