@@ -187,3 +187,13 @@ export interface AdjustmentSuggestion {
   suggestedCalories?: number;
   suggestedProtein?: number;
 }
+
+// Exercise Progression History
+export interface ExerciseHistory {
+  exerciseName: string; // Key by exercise name for consistency
+  lastWeight: number;
+  lastReps: number;
+  allSetsCompleted: boolean; // Did user complete all sets last time?
+  lastUsedAt: string; // ISO date
+  suggestedWeight: number; // Next suggested weight (with progression if applicable)
+}

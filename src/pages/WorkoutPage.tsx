@@ -31,7 +31,9 @@ import {
   ALL_EXERCISES,
   getUserProfile,
   getTodayPlannedWorkout,
-  recordCompletedWorkout
+  recordCompletedWorkout,
+  getSuggestedWeightForExercise,
+  saveExerciseHistoryFromWorkout
 } from "@/lib/storage";
 import { Workout, WorkoutType, WorkoutExercise, Exercise } from "@/lib/types";
 import { toast } from "sonner";
@@ -187,16 +189,19 @@ export default function WorkoutPage() {
       return;
     }
     
-    const workoutExercises: WorkoutExercise[] = selectedExercises.map(ex => ({
-      id: generateId(),
-      exercise: ex,
-      sets: Array.from({ length: 3 }, () => ({
+    const workoutExercises: WorkoutExercise[] = selectedExercises.map(ex => {
+      const suggested = getSuggestedWeightForExercise(ex.name);
+      return {
         id: generateId(),
-        reps: 10,
-        weight: 0,
-        completed: false,
-      })),
-    }));
+        exercise: ex,
+        sets: Array.from({ length: 3 }, () => ({
+          id: generateId(),
+          reps: suggested?.reps ?? 10,
+          weight: suggested?.weight ?? 0,
+          completed: false,
+        })),
+      };
+    });
     
     const newWorkout: Workout = {
       id: generateId(),
@@ -221,16 +226,19 @@ export default function WorkoutPage() {
       return;
     }
     const exercises = getExercisesForType(type);
-    const workoutExercises: WorkoutExercise[] = exercises.map(ex => ({
-      id: generateId(),
-      exercise: ex,
-      sets: Array.from({ length: 3 }, () => ({
+    const workoutExercises: WorkoutExercise[] = exercises.map(ex => {
+      const suggested = getSuggestedWeightForExercise(ex.name);
+      return {
         id: generateId(),
-        reps: 10,
-        weight: 0,
-        completed: false,
-      })),
-    }));
+        exercise: ex,
+        sets: Array.from({ length: 3 }, () => ({
+          id: generateId(),
+          reps: suggested?.reps ?? 10,
+          weight: suggested?.weight ?? 0,
+          completed: false,
+        })),
+      };
+    });
     const newWorkout: Workout = {
       id: generateId(),
       date: getTodayDate(),
@@ -278,6 +286,9 @@ export default function WorkoutPage() {
     saveWorkout(finished);
     setWorkout(finished);
     setIsActive(false);
+    
+    // Save exercise history for progression
+    saveExerciseHistoryFromWorkout(finished);
     
     // Record in coach memory
     recordCompletedWorkout();

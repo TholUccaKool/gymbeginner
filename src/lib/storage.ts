@@ -1,4 +1,4 @@
-import { UserProfile, Meal, Workout, WeeklyPlan, FoodSuggestion, WorkoutType, CoachMemory, WeeklyReview, NutritionDay } from './types';
+import { UserProfile, Meal, Workout, WeeklyPlan, FoodSuggestion, WorkoutType, CoachMemory, WeeklyReview, NutritionDay, ExerciseHistory } from './types';
 
 const STORAGE_KEYS = {
   USER_PROFILE: 'fittrack_user_profile',
@@ -7,6 +7,7 @@ const STORAGE_KEYS = {
   WEEKLY_PLANS: 'fittrack_weekly_plans',
   COACH_MEMORY: 'fittrack_coach_memory',
   WEEKLY_REVIEWS: 'fittrack_weekly_reviews',
+  EXERCISE_HISTORY: 'fittrack_exercise_history',
 } as const;
 
 // Generic storage helpers
@@ -755,4 +756,77 @@ export const generateWeeklyReview = (): WeeklyReview | null => {
   });
   
   return review;
+};
+
+// ============= Exercise Progression History =============
+
+// Get all exercise history
+export const getExerciseHistory = (): Record<string, ExerciseHistory> => {
+  return getItem<Record<string, ExerciseHistory>>(STORAGE_KEYS.EXERCISE_HISTORY) ?? {};
+};
+
+// Get history for a specific exercise
+export const getExerciseHistoryByName = (exerciseName: string): ExerciseHistory | null => {
+  const history = getExerciseHistory();
+  return history[exerciseName.toLowerCase()] ?? null;
+};
+
+// Calculate suggested weight based on progression logic
+const calculateProgressionWeight = (lastWeight: number, allSetsCompleted: boolean): number => {
+  if (!allSetsCompleted) {
+    // Keep same weight if not all sets completed
+    return lastWeight;
+  }
+  
+  // Progressive overload: suggest +2.5kg for lighter weights, +5kg for heavier
+  const increment = lastWeight >= 50 ? 5 : 2.5;
+  return lastWeight + increment;
+};
+
+// Save exercise history after workout completion
+export const saveExerciseHistoryFromWorkout = (workout: Workout): void => {
+  if (!workout.completed) return;
+  
+  const history = getExerciseHistory();
+  const now = new Date().toISOString();
+  
+  workout.exercises.forEach(workoutExercise => {
+    const exerciseName = workoutExercise.exercise.name.toLowerCase();
+    const completedSets = workoutExercise.sets.filter(s => s.completed);
+    
+    if (completedSets.length === 0) return; // Skip if no sets completed
+    
+    // Get the max weight used in completed sets
+    const maxWeight = Math.max(...completedSets.map(s => s.weight));
+    // Get the reps at that weight
+    const repsAtMaxWeight = completedSets.find(s => s.weight === maxWeight)?.reps ?? 10;
+    
+    // Check if all sets were completed
+    const allSetsCompleted = workoutExercise.sets.every(s => s.completed);
+    
+    // Calculate suggested weight for next time
+    const suggestedWeight = calculateProgressionWeight(maxWeight, allSetsCompleted);
+    
+    history[exerciseName] = {
+      exerciseName: workoutExercise.exercise.name,
+      lastWeight: maxWeight,
+      lastReps: repsAtMaxWeight,
+      allSetsCompleted,
+      lastUsedAt: now,
+      suggestedWeight,
+    };
+  });
+  
+  setItem(STORAGE_KEYS.EXERCISE_HISTORY, history);
+};
+
+// Get suggested weight for an exercise (for pre-filling workout)
+export const getSuggestedWeightForExercise = (exerciseName: string): { weight: number; reps: number } | null => {
+  const history = getExerciseHistoryByName(exerciseName);
+  if (!history) return null;
+  
+  return {
+    weight: history.suggestedWeight,
+    reps: history.lastReps,
+  };
 };
