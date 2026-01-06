@@ -50,9 +50,8 @@ export default function ProfilePage() {
   };
 
   const handleAICoachClick = () => {
-    if (checkPremium("AI Coach")) {
-      window.location.href = '/onboarding/coach';
-    }
+    // AI Coach onboarding is free - generation is free, applying is premium
+    window.location.href = '/onboarding/coach';
   };
 
   const togglePremiumDemo = () => {
@@ -193,21 +192,17 @@ export default function ProfilePage() {
           onClick={handleAICoachClick}
           className="w-full bg-card rounded-2xl border border-border/60 p-5 mb-4 text-left shadow-sm hover:shadow-md hover:border-accent/30 transition-all duration-300 animate-slide-up relative overflow-hidden" style={{ animationDelay: '150ms' }}
         >
-          {!isPremium() && (
-            <div className="absolute top-3 right-3 px-2 py-0.5 text-[10px] font-bold rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white flex items-center gap-1">
-              <Crown className="w-3 h-3" />
-              PREMIUM
-            </div>
-          )}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center">
                 <Sparkles className="w-5 h-5 text-accent" />
               </div>
               <div>
-                <h3 className="font-semibold">{isPremium() ? 'AI Coach' : 'Try AI Coach'}</h3>
+                <h3 className="font-semibold">AI Coach</h3>
                 <p className="text-sm text-muted-foreground">
-                  Get personalized plans and guidance
+                  {isPremium() 
+                    ? 'Adjust your plan anytime' 
+                    : 'Generate a personalized plan for free'}
                 </p>
               </div>
             </div>
@@ -251,14 +246,20 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        {/* Demo Toggle for Premium */}
+        {/* Premium Status */}
         <div className="bg-card rounded-2xl border border-dashed border-amber-400/50 p-4 mb-6 animate-slide-up" style={{ animationDelay: '250ms' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Crown className="w-5 h-5 text-amber-500" />
               <div>
-                <p className="font-medium text-sm">Premium Demo Mode</p>
-                <p className="text-xs text-muted-foreground">Toggle to test premium features</p>
+                <p className="font-medium text-sm">
+                  {isPremium() ? 'Premium Active' : 'Free Plan'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {isPremium() 
+                    ? 'Ongoing coaching enabled' 
+                    : 'You can track meals & workouts'}
+                </p>
               </div>
             </div>
             <Switch 
@@ -266,6 +267,9 @@ export default function ProfilePage() {
               onCheckedChange={togglePremiumDemo}
             />
           </div>
+          <p className="text-[10px] text-muted-foreground mt-2 text-center">
+            Demo toggle for testing
+          </p>
         </div>
 
         {/* App Info */}

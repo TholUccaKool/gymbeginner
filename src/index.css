@@ -49,6 +49,7 @@
 
     /* Status colors */
     --success: 160 60% 42%;
+    --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --info: 210 90% 55%;
 
@@ -109,6 +110,7 @@
     --fat: 280 50% 60%;
 
     --success: 160 55% 48%;
+    --success-foreground: 30 15% 6%;
     --warning: 38 85% 52%;
     --info: 210 80% 58%;
 

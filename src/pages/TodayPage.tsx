@@ -7,6 +7,9 @@ import { ProgressRing } from "@/components/ui/progress-ring";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { PremiumPaywall, usePremiumGate } from "@/components/PremiumPaywall";
+import { WeeklyBar } from "@/components/WeeklyBar";
+import { TodayStatus } from "@/components/TodayStatus";
+import { NutritionGuidance } from "@/components/NutritionGuidance";
 import { 
   getUserProfile, 
   getMealsByDate, 
@@ -35,7 +38,7 @@ export default function TodayPage() {
   const [mealProtein, setMealProtein] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(true);
-  const { showPaywall, setShowPaywall, paywallFeature, checkPremium, isPremium } = usePremiumGate();
+  const { showPaywall, setShowPaywall, paywallFeature, isPremium } = usePremiumGate();
   const profile = getUserProfile();
   const targets = profile?.nutritionTargets ?? { calories: 2000, protein: 150 };
   const totals = useMemo(() => getDailyNutritionTotals(getTodayDate()), [meals]);
@@ -71,7 +74,7 @@ export default function TodayPage() {
     setMealProtein('');
     setIsAddingMeal(false);
     setShowSuggestions(true);
-    toast.success('Meal added');
+    toast.success('Meal logged');
   };
 
   const handleQuickAdd = (food: typeof COMMON_FOODS[0]) => {
@@ -102,25 +105,31 @@ export default function TodayPage() {
           })}
         />
 
+        {/* Weekly Overview */}
+        <WeeklyBar />
+
+        {/* Today's Primary Action */}
+        <TodayStatus />
+
         {/* Progress Rings */}
-        <div className="flex justify-center gap-10 py-8 animate-scale-in">
+        <div className="flex justify-center gap-10 py-6 animate-scale-in">
           <div className="text-center">
             <div className="relative">
               <ProgressRing 
                 progress={caloriesProgress} 
-                size={110}
-                strokeWidth={10}
+                size={100}
+                strokeWidth={8}
                 progressClassName="stroke-nutrition-calories"
               >
                 <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-xl bg-nutrition-calories/10 flex items-center justify-center mb-1">
-                    <Flame className="w-5 h-5 text-nutrition-calories" />
+                  <div className="w-9 h-9 rounded-xl bg-nutrition-calories/10 flex items-center justify-center">
+                    <Flame className="w-4 h-4 text-nutrition-calories" />
                   </div>
                 </div>
               </ProgressRing>
             </div>
-            <div className="mt-4">
-              <p className="font-display font-bold text-2xl">{totals.calories}</p>
+            <div className="mt-3">
+              <p className="font-display font-bold text-xl">{totals.calories}</p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {caloriesRemaining > 0 ? `${caloriesRemaining} left` : `${Math.abs(caloriesRemaining)} over`}
               </p>
@@ -131,25 +140,28 @@ export default function TodayPage() {
             <div className="relative">
               <ProgressRing 
                 progress={proteinProgress} 
-                size={110}
-                strokeWidth={10}
+                size={100}
+                strokeWidth={8}
                 progressClassName="stroke-nutrition-protein"
               >
                 <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-xl bg-nutrition-protein/10 flex items-center justify-center mb-1">
-                    <Beef className="w-5 h-5 text-nutrition-protein" />
+                  <div className="w-9 h-9 rounded-xl bg-nutrition-protein/10 flex items-center justify-center">
+                    <Beef className="w-4 h-4 text-nutrition-protein" />
                   </div>
                 </div>
               </ProgressRing>
             </div>
-            <div className="mt-4">
-              <p className="font-display font-bold text-2xl">{totals.protein}g</p>
+            <div className="mt-3">
+              <p className="font-display font-bold text-xl">{totals.protein}g</p>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {proteinRemaining > 0 ? `${proteinRemaining}g left` : 'Target hit!'}
               </p>
             </div>
           </div>
         </div>
+
+        {/* Nutrition Guidance */}
+        <NutritionGuidance targets={targets} />
 
         {/* Smart Adjustment */}
         {showAdjustment && (
@@ -169,17 +181,17 @@ export default function TodayPage() {
         {/* Meals List */}
         <div className="space-y-3 mb-6">
           <div className="flex items-center justify-between px-1">
-            <h2 className="font-medium text-muted-foreground text-xs uppercase tracking-wider">Meals</h2>
-            <span className="text-xs text-muted-foreground">{meals.length} logged</span>
+            <h2 className="font-medium text-muted-foreground text-xs uppercase tracking-wider">Logged Meals</h2>
+            <span className="text-xs text-muted-foreground">{meals.length} today</span>
           </div>
 
           {meals.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground animate-fade-in">
-              <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
-                <Plus className="w-8 h-8 text-muted-foreground/60" />
+            <div className="text-center py-10 text-muted-foreground animate-fade-in">
+              <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center mx-auto mb-3">
+                <Plus className="w-6 h-6 text-muted-foreground/60" />
               </div>
               <p className="font-medium">No meals logged yet</p>
-              <p className="text-sm mt-1">Tap below to add your first meal</p>
+              <p className="text-sm mt-1">Track what you eat to hit your targets</p>
             </div>
           ) : (
             meals.map((meal, index) => (
@@ -210,12 +222,12 @@ export default function TodayPage() {
           <DialogTrigger asChild>
             <Button size="xl" className="w-full shadow-lg shadow-primary/20 glow-primary">
               <Plus className="w-5 h-5 mr-2" />
-              Add Meal
+              Log Meal
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Add Meal</DialogTitle>
+              <DialogTitle>Log Meal</DialogTitle>
             </DialogHeader>
 
             {showSuggestions && (
@@ -313,7 +325,7 @@ export default function TodayPage() {
                     Back
                   </Button>
                   <Button size="lg" className="flex-1" onClick={handleAddMeal}>
-                    Add Meal
+                    Log Meal
                   </Button>
                 </div>
               </div>

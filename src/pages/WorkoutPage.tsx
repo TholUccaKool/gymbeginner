@@ -389,8 +389,18 @@ export default function WorkoutPage() {
             <div className="w-24 h-24 rounded-3xl bg-secondary flex items-center justify-center mx-auto mb-6">
               <Coffee className="w-12 h-12 text-muted-foreground" />
             </div>
-            <h2 className="text-2xl font-display font-bold mb-2">Today is Rest Day</h2>
-            <p className="text-muted-foreground mb-8 max-w-xs mx-auto">Recovery is just as important as training.</p>
+            <h2 className="text-2xl font-display font-bold mb-2">Take It Easy Today</h2>
+            <p className="text-muted-foreground mb-4 max-w-xs mx-auto">
+              Your muscles grow during rest, not during workouts. Recovery is essential.
+            </p>
+            <div className="bg-card rounded-2xl border border-border/60 p-4 mb-8 text-left max-w-xs mx-auto">
+              <p className="text-sm font-medium mb-2">Good rest day ideas:</p>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Light walk or stretching</li>
+                <li>• Focus on hitting protein target</li>
+                <li>• Get 7-8 hours of sleep</li>
+              </ul>
+            </div>
             <Button variant="outline" size="lg" onClick={() => setIsActive(true)} className="gap-2">
               <Dumbbell className="w-4 h-4" /> Train Anyway
             </Button>
@@ -421,10 +431,13 @@ export default function WorkoutPage() {
                   <h2 className="text-2xl font-display font-bold">{typeInfo?.label}</h2>
                 </div>
               </div>
-              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-6">
+              <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
                 <span className="flex items-center gap-1.5"><Dumbbell className="w-4 h-4" /> {exercises.length} exercises</span>
                 <span className="flex items-center gap-1.5"><Calendar className="w-4 h-4" /> ~45 min</span>
               </div>
+              <p className="text-xs text-muted-foreground mb-4">
+                This workout follows your training split and targets {plannedType.replace('-', ' ')} muscles.
+              </p>
               <Button size="xl" className="w-full shadow-lg shadow-primary/20" onClick={() => startWorkout(plannedType)}>
                 <Play className="w-5 h-5 mr-2" /> Start Workout
               </Button>
@@ -449,7 +462,7 @@ export default function WorkoutPage() {
     return (
       <div className="min-h-screen bg-background pb-24 gradient-mesh">
         <div className="max-w-lg mx-auto px-4">
-          <PageHeader title="Workout" subtitle="What are you training today?" />
+          <PageHeader title="Workout" subtitle="Pick a workout to get started" />
           <div className="grid grid-cols-2 gap-3 mt-4">
             {WORKOUT_TYPES.map((type, index) => (
               <button
@@ -481,11 +494,14 @@ export default function WorkoutPage() {
         <div className="max-w-lg mx-auto px-4">
           <PageHeader title="Workout" />
           <div className="text-center py-12 animate-scale-in">
-            <div className="w-24 h-24 rounded-3xl bg-status-success/10 flex items-center justify-center mx-auto mb-6 glow">
-              <Trophy className="w-12 h-12 text-status-success" />
+            <div className="w-24 h-24 rounded-3xl bg-success/10 flex items-center justify-center mx-auto mb-6 glow">
+              <Trophy className="w-12 h-12 text-success" />
             </div>
             <h2 className="text-2xl font-display font-bold mb-2">Workout Complete!</h2>
-            <p className="text-muted-foreground">{workout.name} · {completedSets}/{totalSets} sets</p>
+            <p className="text-muted-foreground mb-2">{workout.name} · {completedSets}/{totalSets} sets</p>
+            <p className="text-sm text-muted-foreground max-w-xs mx-auto">
+              Great work! Remember to refuel with protein and stay hydrated.
+            </p>
             <Button variant="outline" size="lg" className="mt-8" onClick={() => setWorkout(null)}>Start Another</Button>
           </div>
         </div>
