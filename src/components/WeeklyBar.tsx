@@ -1,16 +1,15 @@
 import { useMemo } from "react";
-import { Dumbbell, Coffee } from "lucide-react";
+import { Dumbbell, Coffee, Check } from "lucide-react";
 import { getUserProfile, getWorkoutByDate } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 interface DayInfo {
   dayOfWeek: number;
   label: string;
-  name: string;
   isToday: boolean;
+  isPast: boolean;
   isWorkoutDay: boolean;
   isCompleted: boolean;
   date: string;
@@ -39,8 +38,8 @@ export function WeeklyBar() {
       days.push({
         dayOfWeek: i,
         label: DAY_LABELS[i],
-        name: DAY_NAMES[i],
         isToday: i === todayDayOfWeek,
+        isPast: i < todayDayOfWeek,
         isWorkoutDay: workoutDays.includes(i),
         isCompleted: workout?.completed ?? false,
         date: dateStr,
@@ -50,54 +49,63 @@ export function WeeklyBar() {
     return days;
   }, [workoutDays]);
   
-  const workoutCount = workoutDays.length;
-  const restCount = 7 - workoutCount;
+  const completedCount = weekDays.filter(d => d.isCompleted).length;
+  const scheduledCount = workoutDays.length;
 
   return (
     <div className="bg-card rounded-2xl border border-border/60 p-4 mb-6 shadow-sm animate-slide-up">
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm font-medium text-muted-foreground">This Week</p>
+        <p className="text-sm font-medium">This Week</p>
         <p className="text-xs text-muted-foreground">
-          {workoutCount} training · {restCount} rest
+          {completedCount}/{scheduledCount} workouts
         </p>
       </div>
       
       <div className="flex justify-between gap-1">
-        {weekDays.map((day) => (
-          <div
-            key={day.dayOfWeek}
-            className={cn(
-              "flex-1 flex flex-col items-center gap-1.5 py-2 px-1 rounded-xl transition-all",
-              day.isToday && "bg-primary/10 ring-2 ring-primary/30"
-            )}
-          >
-            <span className={cn(
-              "text-xs font-medium",
-              day.isToday ? "text-primary" : "text-muted-foreground"
-            )}>
-              {day.label}
-            </span>
-            
-            <div className={cn(
-              "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
-              day.isWorkoutDay 
-                ? day.isCompleted 
-                  ? "bg-success text-success-foreground" 
-                  : "bg-primary/15 text-primary"
-                : "bg-secondary text-muted-foreground/60"
-            )}>
-              {day.isWorkoutDay ? (
-                <Dumbbell className="w-3.5 h-3.5" />
-              ) : (
-                <Coffee className="w-3.5 h-3.5" />
+        {weekDays.map((day) => {
+          // Determine the state of each day
+          const showCompleted = day.isCompleted;
+          const showMissed = day.isPast && day.isWorkoutDay && !day.isCompleted && !day.isToday;
+          const showScheduled = day.isWorkoutDay && !day.isCompleted && !showMissed;
+          const showRest = !day.isWorkoutDay;
+          
+          return (
+            <div
+              key={day.dayOfWeek}
+              className={cn(
+                "flex-1 flex flex-col items-center gap-1.5 py-2 px-0.5 rounded-xl transition-all",
+                day.isToday && "bg-primary/10 ring-2 ring-primary/30"
+              )}
+            >
+              <span className={cn(
+                "text-xs font-medium",
+                day.isToday ? "text-primary" : "text-muted-foreground"
+              )}>
+                {day.label}
+              </span>
+              
+              <div className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center transition-all",
+                showCompleted && "bg-success text-success-foreground",
+                showMissed && "bg-destructive/15 text-destructive",
+                showScheduled && "bg-primary/15 text-primary",
+                showRest && "bg-secondary text-muted-foreground/50"
+              )}>
+                {showCompleted ? (
+                  <Check className="w-4 h-4" />
+                ) : showScheduled || showMissed ? (
+                  <Dumbbell className="w-3.5 h-3.5" />
+                ) : (
+                  <Coffee className="w-3.5 h-3.5" />
+                )}
+              </div>
+              
+              {day.isToday && (
+                <div className="w-1.5 h-1.5 rounded-full bg-primary" />
               )}
             </div>
-            
-            {day.isToday && (
-              <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

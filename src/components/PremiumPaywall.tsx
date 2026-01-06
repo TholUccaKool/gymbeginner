@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Crown, Check, X, Sparkles, TrendingUp, Brain } from "lucide-react";
+import { Crown, Sparkles, TrendingUp, Brain, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,10 +17,10 @@ interface PremiumPaywallProps {
 }
 
 const PREMIUM_FEATURES = [
-  { icon: Brain, label: "Weekly adjustments", description: "Targets that adapt to your progress" },
-  { icon: Sparkles, label: "Ongoing coaching", description: "Daily guidance and recommendations" },
-  { icon: TrendingUp, label: "Smart progression", description: "Coach remembers your history" },
-  { icon: Crown, label: "Regenerate plans", description: "Update when goals or schedule change" },
+  { icon: Calendar, label: "Weekly reviews", description: "See how you did and what's changing" },
+  { icon: TrendingUp, label: "Smart adjustments", description: "Calories and protein adapt to your progress" },
+  { icon: Brain, label: "Coach memory", description: "Your history shapes future recommendations" },
+  { icon: Sparkles, label: "Daily guidance", description: "Know what to focus on each day" },
 ];
 
 export function PremiumPaywall({ open, onOpenChange, feature }: PremiumPaywallProps) {
@@ -42,7 +42,7 @@ export function PremiumPaywall({ open, onOpenChange, feature }: PremiumPaywallPr
       
       setIsProcessing(false);
       onOpenChange(false);
-      toast.success("Welcome to Premium! All features are now unlocked.");
+      toast.success("Welcome to Premium! Your coaching is now active.");
     }, 1500);
   };
 
@@ -55,28 +55,28 @@ export function PremiumPaywall({ open, onOpenChange, feature }: PremiumPaywallPr
               <Crown className="w-7 h-7 text-white" />
             </div>
           </div>
-          <DialogTitle className="text-center text-xl">Continue with Coaching</DialogTitle>
+          <DialogTitle className="text-center text-xl">Keep Your Coach</DialogTitle>
           <p className="text-center text-sm text-muted-foreground mt-1">
-            Your first week was free. Keep the guidance going.
+            Your free week showed you how coaching works. Ready to continue?
           </p>
         </DialogHeader>
 
         {feature && (
           <p className="text-center text-sm text-muted-foreground -mt-2 mb-2">
-            <span className="font-medium text-foreground">{feature}</span> requires Premium
+            <span className="font-medium text-foreground">{feature}</span> is a Premium feature
           </p>
         )}
 
-        {/* Features List */}
-        <div className="space-y-2.5 py-3">
+        {/* What you get */}
+        <div className="space-y-2 py-3">
           {PREMIUM_FEATURES.map((item, index) => (
             <div key={index} className="flex items-center gap-3 p-2.5 rounded-xl bg-secondary/50">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <item.icon className="w-4 h-4 text-primary" />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium">{item.label}</p>
-                <p className="text-xs text-muted-foreground">{item.description}</p>
+                <p className="text-xs text-muted-foreground truncate">{item.description}</p>
               </div>
             </div>
           ))}
@@ -105,8 +105,8 @@ export function PremiumPaywall({ open, onOpenChange, feature }: PremiumPaywallPr
                 : 'border-border hover:border-primary/50'
             }`}
           >
-            <div className="absolute -top-2 right-2 px-2 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded-full">
-              SAVE 44%
+            <div className="absolute -top-2 right-2 px-2 py-0.5 bg-success text-success-foreground text-[10px] font-bold rounded-full">
+              BEST VALUE
             </div>
             <p className="text-xs text-muted-foreground">Yearly</p>
             <p className="text-lg font-bold">$19.99</p>
@@ -134,16 +134,16 @@ export function PremiumPaywall({ open, onOpenChange, feature }: PremiumPaywallPr
           )}
         </Button>
 
-        {/* Dismiss */}
+        {/* Dismiss - calm, not pushy */}
         <button
           onClick={() => onOpenChange(false)}
           className="text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
         >
-          Not now — continue with static targets
+          Not right now
         </button>
 
         <p className="text-center text-xs text-muted-foreground">
-          This is a demo. No real payment will be processed.
+          Demo mode — no real payment will occur.
         </p>
       </DialogContent>
     </Dialog>
