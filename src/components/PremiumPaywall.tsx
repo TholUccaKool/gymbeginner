@@ -17,10 +17,10 @@ interface PremiumPaywallProps {
 }
 
 const PREMIUM_FEATURES = [
-  { icon: Brain, label: "Apply & save your personalized plan" },
-  { icon: Sparkles, label: "Regenerate plans when goals change" },
-  { icon: TrendingUp, label: "Weekly workout & nutrition adjustments" },
-  { icon: Crown, label: "Ongoing AI coaching guidance" },
+  { icon: Brain, label: "Apply & save your personalized plan", description: "Put your custom plan into action" },
+  { icon: Sparkles, label: "Regenerate anytime", description: "Update when goals or schedule change" },
+  { icon: TrendingUp, label: "Weekly adjustments", description: "Progressive workouts & nutrition tweaks" },
+  { icon: Crown, label: "Ongoing coaching", description: "You're not doing this alone" },
 ];
 
 export function PremiumPaywall({ open, onOpenChange, feature }: PremiumPaywallProps) {
@@ -55,23 +55,29 @@ export function PremiumPaywall({ open, onOpenChange, feature }: PremiumPaywallPr
               <Crown className="w-7 h-7 text-white" />
             </div>
           </div>
-          <DialogTitle className="text-center text-xl">Upgrade to Premium</DialogTitle>
+          <DialogTitle className="text-center text-xl">Get Ongoing Coaching</DialogTitle>
+          <p className="text-center text-sm text-muted-foreground mt-1">
+            Stop guessing. Start progressing.
+          </p>
         </DialogHeader>
 
         {feature && (
-          <p className="text-center text-sm text-muted-foreground -mt-1">
-            <span className="font-medium text-foreground">{feature}</span> is a Premium feature
+          <p className="text-center text-sm text-muted-foreground -mt-2 mb-2">
+            <span className="font-medium text-foreground">{feature}</span> requires Premium
           </p>
         )}
 
         {/* Features List */}
-        <div className="space-y-3 py-4">
+        <div className="space-y-2.5 py-3">
           {PREMIUM_FEATURES.map((item, index) => (
-            <div key={index} className="flex items-center gap-3">
+            <div key={index} className="flex items-center gap-3 p-2.5 rounded-xl bg-secondary/50">
               <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                 <item.icon className="w-4 h-4 text-primary" />
               </div>
-              <span className="text-sm">{item.label}</span>
+              <div className="flex-1">
+                <p className="text-sm font-medium">{item.label}</p>
+                <p className="text-xs text-muted-foreground">{item.description}</p>
+              </div>
             </div>
           ))}
         </div>
@@ -133,7 +139,7 @@ export function PremiumPaywall({ open, onOpenChange, feature }: PremiumPaywallPr
           onClick={() => onOpenChange(false)}
           className="text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
         >
-          Continue with Free version
+          Not now — continue tracking
         </button>
 
         <p className="text-center text-xs text-muted-foreground">

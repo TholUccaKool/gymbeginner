@@ -69,11 +69,12 @@ export default {
           carbs: "hsl(var(--carbs))",
           fat: "hsl(var(--fat))",
         },
-        status: {
-          success: "hsl(var(--success))",
-          warning: "hsl(var(--warning))",
-          info: "hsl(var(--info))",
+        success: {
+          DEFAULT: "hsl(var(--success))",
+          foreground: "hsl(var(--success-foreground))",
         },
+        warning: "hsl(var(--warning))",
+        info: "hsl(var(--info))",
       },
       borderRadius: {
         lg: "var(--radius)",
