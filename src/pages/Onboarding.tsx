@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { saveUserProfile, generateId } from "@/lib/storage";
+import { saveUserProfile, generateId, getUserProfile } from "@/lib/storage";
 import { UserProfile } from "@/lib/types";
-import { Dumbbell, Sparkles, ArrowRight, Check } from "lucide-react";
+import { Dumbbell, Sparkles, ArrowRight, Check, Calendar } from "lucide-react";
 
 const WEEKDAYS = [
   { id: 0, label: 'Sun' },
@@ -17,21 +17,34 @@ const WEEKDAYS = [
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  const [step, setStep] = useState<'welcome' | 'experience' | 'trainingDays' | 'selectDays'>('welcome');
+  const [step, setStep] = useState<'welcome' | 'trainingDays' | 'selectDays' | 'experience'>('welcome');
   const [experienceLevel, setExperienceLevel] = useState<'experienced' | 'new' | null>(null);
   const [trainingDays, setTrainingDays] = useState<number | null>(null);
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
+
+  const handleTrainingDaysSelect = (days: number) => {
+    setTrainingDays(days);
+    setSelectedDays([]);
+  };
+
+  const handleDaysComplete = () => {
+    if (!trainingDays || selectedDays.length !== trainingDays) return;
+    // After selecting days, ask about experience level
+    setStep('experience');
+  };
 
   const handleExperienceSelect = (level: 'experienced' | 'new') => {
     setExperienceLevel(level);
     
     if (level === 'new') {
-      // New users go to coach onboarding
+      // New users: save profile with training days, then go to coach onboarding
       const profile: UserProfile = {
         id: generateId(),
         experienceLevel: level,
         createdAt: new Date().toISOString(),
         onboardingComplete: false,
+        trainingDays: trainingDays!,
+        workoutDays: selectedDays,
         nutritionTargets: {
           calories: 2000,
           protein: 150,
@@ -40,14 +53,22 @@ export default function Onboarding() {
       saveUserProfile(profile);
       navigate('/onboarding/coach');
     } else {
-      // Experienced users pick training days here
-      setStep('trainingDays');
+      // Experienced users: save profile and go to today
+      const profile: UserProfile = {
+        id: generateId(),
+        experienceLevel: 'experienced',
+        createdAt: new Date().toISOString(),
+        onboardingComplete: true,
+        trainingDays: trainingDays!,
+        workoutDays: selectedDays,
+        nutritionTargets: {
+          calories: 2000,
+          protein: 150,
+        },
+      };
+      saveUserProfile(profile);
+      navigate('/today');
     }
-  };
-
-  const handleTrainingDaysSelect = (days: number) => {
-    setTrainingDays(days);
-    setSelectedDays([]);
   };
 
   const toggleDay = (dayId: number) => {
@@ -56,26 +77,6 @@ export default function Onboarding() {
     } else if (selectedDays.length < (trainingDays || 0)) {
       setSelectedDays([...selectedDays, dayId]);
     }
-  };
-
-  const handleComplete = () => {
-    if (!trainingDays || selectedDays.length !== trainingDays) return;
-
-    const profile: UserProfile = {
-      id: generateId(),
-      experienceLevel: 'experienced',
-      createdAt: new Date().toISOString(),
-      onboardingComplete: true,
-      trainingDays,
-      workoutDays: selectedDays,
-      nutritionTargets: {
-        calories: 2000,
-        protein: 150,
-      },
-    };
-
-    saveUserProfile(profile);
-    navigate('/today');
   };
 
   if (step === 'welcome') {
@@ -94,61 +95,10 @@ export default function Onboarding() {
           <Button 
             size="lg" 
             className="w-full h-14 text-base font-medium"
-            onClick={() => setStep('experience')}
+            onClick={() => setStep('trainingDays')}
           >
             Get Started
           </Button>
-        </div>
-      </div>
-    );
-  }
-
-  if (step === 'experience') {
-    return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
-        <div className="animate-slide-up text-center max-w-sm w-full">
-          <h1 className="text-2xl font-display font-bold mb-2">
-            Are you experienced in the gym?
-          </h1>
-          <p className="text-muted-foreground mb-10">
-            This helps us personalize your experience
-          </p>
-
-          <div className="space-y-4">
-            <button
-              onClick={() => handleExperienceSelect('experienced')}
-              className="w-full p-6 rounded-2xl bg-card border border-border hover:border-primary/50 hover:shadow transition-all duration-200 text-left group"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center group-hover:bg-primary-muted transition-colors">
-                  <Dumbbell className="w-6 h-6 text-foreground group-hover:text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-1">Experienced</h3>
-                  <p className="text-sm text-muted-foreground">
-                    I know my way around. Just give me a clean tracker.
-                  </p>
-                </div>
-              </div>
-            </button>
-
-            <button
-              onClick={() => handleExperienceSelect('new')}
-              className="w-full p-6 rounded-2xl bg-card border border-border hover:border-primary/50 hover:shadow transition-all duration-200 text-left group"
-            >
-              <div className="flex items-start gap-4">
-                <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center group-hover:bg-primary-muted transition-colors">
-                  <Sparkles className="w-6 h-6 text-foreground group-hover:text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-1">New to Fitness</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Guide me with AI-powered plans and coaching.
-                  </p>
-                </div>
-              </div>
-            </button>
-          </div>
         </div>
       </div>
     );
@@ -158,15 +108,21 @@ export default function Onboarding() {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
         <div className="animate-slide-up max-w-sm w-full">
+          <div className="flex items-center justify-center gap-3 mb-6">
+            <div className="w-10 h-10 rounded-xl bg-primary-muted flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-primary" />
+            </div>
+          </div>
+          
           <h1 className="text-2xl font-display font-bold mb-2 text-center">
-            How many days per week can you realistically go to the gym?
+            How many days can you train?
           </h1>
           <p className="text-muted-foreground mb-8 text-center">
-            Be honest with yourself
+            Pick what's realistic for you — you can always adjust later
           </p>
 
           <div className="grid grid-cols-4 gap-2 mb-6">
-            {[1, 2, 3, 4, 5, 6, 7].map(days => (
+            {[2, 3, 4, 5, 6].map(days => (
               <button
                 key={days}
                 onClick={() => handleTrainingDaysSelect(days)}
@@ -177,7 +133,7 @@ export default function Onboarding() {
                 }`}
               >
                 <span className="text-lg font-bold">{days}</span>
-                <span className="text-xs text-muted-foreground block">day{days > 1 ? 's' : ''}</span>
+                <span className="text-xs text-muted-foreground block">days</span>
               </button>
             ))}
           </div>
@@ -201,10 +157,10 @@ export default function Onboarding() {
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
         <div className="animate-slide-up max-w-sm w-full">
           <h1 className="text-2xl font-display font-bold mb-2 text-center">
-            Which days do you want to train?
+            Which days work best?
           </h1>
           <p className="text-muted-foreground mb-8 text-center">
-            Select exactly {maxDays} day{maxDays > 1 ? 's' : ''} ({selectedDays.length}/{maxDays} selected)
+            Select {maxDays} days ({selectedDays.length}/{maxDays} selected)
           </p>
 
           <div className="grid grid-cols-7 gap-1.5 mb-6">
@@ -235,11 +191,62 @@ export default function Onboarding() {
 
           <Button 
             className="w-full"
-            onClick={handleComplete}
+            onClick={handleDaysComplete}
             disabled={selectedDays.length !== maxDays}
           >
-            Get Started <Check className="w-4 h-4 ml-2" />
+            Continue <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
+        </div>
+      </div>
+    );
+  }
+
+  if (step === 'experience') {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+        <div className="animate-slide-up text-center max-w-sm w-full">
+          <h1 className="text-2xl font-display font-bold mb-2">
+            One more thing...
+          </h1>
+          <p className="text-muted-foreground mb-10">
+            How familiar are you with the gym?
+          </p>
+
+          <div className="space-y-4">
+            <button
+              onClick={() => handleExperienceSelect('experienced')}
+              className="w-full p-6 rounded-2xl bg-card border border-border hover:border-primary/50 hover:shadow transition-all duration-200 text-left group"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center group-hover:bg-primary-muted transition-colors">
+                  <Dumbbell className="w-6 h-6 text-foreground group-hover:text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg mb-1">I know my way around</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Just give me a clean tracker — I'll handle the rest.
+                  </p>
+                </div>
+              </div>
+            </button>
+
+            <button
+              onClick={() => handleExperienceSelect('new')}
+              className="w-full p-6 rounded-2xl bg-card border border-border hover:border-primary/50 hover:shadow transition-all duration-200 text-left group"
+            >
+              <div className="flex items-start gap-4">
+                <div className="w-12 h-12 rounded-xl bg-secondary flex items-center justify-center group-hover:bg-primary-muted transition-colors">
+                  <Sparkles className="w-6 h-6 text-foreground group-hover:text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg mb-1">I'd like some guidance</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Help me with AI-powered workout and nutrition plans.
+                  </p>
+                </div>
+              </div>
+            </button>
+          </div>
         </div>
       </div>
     );
