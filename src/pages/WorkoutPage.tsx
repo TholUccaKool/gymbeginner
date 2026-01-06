@@ -108,6 +108,8 @@ export default function WorkoutPage() {
   const [showCustomBuilder, setShowCustomBuilder] = useState(false);
   const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
   const [exerciseSearch, setExerciseSearch] = useState("");
+  const [editingSet, setEditingSet] = useState<{ exerciseId: string; setId: string; field: 'reps' | 'weight' } | null>(null);
+  const [editValue, setEditValue] = useState("");
   
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -278,6 +280,36 @@ export default function WorkoutPage() {
     };
     setWorkout(updated);
     saveWorkout(updated);
+  };
+
+  const setDirectValue = (exerciseId: string, setId: string, field: 'reps' | 'weight', value: number) => {
+    if (!workout) return;
+    const updated = {
+      ...workout,
+      exercises: workout.exercises.map(ex =>
+        ex.id === exerciseId
+          ? { ...ex, sets: ex.sets.map(s => s.id === setId ? { ...s, [field]: Math.max(0, value) } : s) }
+          : ex
+      ),
+    };
+    setWorkout(updated);
+    saveWorkout(updated);
+  };
+
+  const handleStartEdit = (exerciseId: string, setId: string, field: 'reps' | 'weight', currentValue: number) => {
+    setEditingSet({ exerciseId, setId, field });
+    setEditValue(currentValue.toString());
+  };
+
+  const handleFinishEdit = () => {
+    if (editingSet && editValue) {
+      const numValue = parseFloat(editValue);
+      if (!isNaN(numValue)) {
+        setDirectValue(editingSet.exerciseId, editingSet.setId, editingSet.field, numValue);
+      }
+    }
+    setEditingSet(null);
+    setEditValue("");
   };
 
   const finishWorkout = () => {
@@ -505,20 +537,68 @@ export default function WorkoutPage() {
   }
 
   if (workout?.completed) {
+    // Calculate workout stats
+    const exerciseStats = workout.exercises.map(ex => ({
+      name: ex.exercise.name,
+      completedSets: ex.sets.filter(s => s.completed).length,
+      totalSets: ex.sets.length,
+      maxWeight: Math.max(...ex.sets.filter(s => s.completed).map(s => s.weight), 0),
+    }));
+    
     return (
       <div className="min-h-screen bg-background pb-24 gradient-mesh">
         <div className="max-w-lg mx-auto px-4">
-          <PageHeader title="Workout" />
-          <div className="text-center py-12 animate-scale-in">
-            <div className="w-24 h-24 rounded-3xl bg-success/10 flex items-center justify-center mx-auto mb-6 glow">
-              <Trophy className="w-12 h-12 text-success" />
+          <PageHeader title="Workout Complete" />
+          <div className="animate-scale-in">
+            <div className="text-center py-8">
+              <div className="w-20 h-20 rounded-3xl bg-success/15 flex items-center justify-center mx-auto mb-4">
+                <Trophy className="w-10 h-10 text-success" />
+              </div>
+              <h2 className="text-2xl font-display font-bold mb-1">Great work!</h2>
+              <p className="text-muted-foreground">{workout.name}</p>
             </div>
-            <h2 className="text-2xl font-display font-bold mb-2">Workout Complete!</h2>
-            <p className="text-muted-foreground mb-2">{workout.name} · {completedSets}/{totalSets} sets</p>
-            <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-              Great work! Remember to refuel with protein and stay hydrated.
+            
+            {/* Summary card */}
+            <div className="bg-card rounded-2xl border border-border/60 p-4 mb-4">
+              <div className="grid grid-cols-2 gap-4 text-center">
+                <div>
+                  <p className="text-2xl font-bold text-primary">{completedSets}</p>
+                  <p className="text-xs text-muted-foreground">Sets completed</p>
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-primary">{workout.exercises.length}</p>
+                  <p className="text-xs text-muted-foreground">Exercises</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Exercise breakdown */}
+            <div className="bg-card rounded-2xl border border-border/60 overflow-hidden mb-6">
+              <div className="px-4 py-3 border-b border-border/60">
+                <p className="text-sm font-medium">Exercise Summary</p>
+              </div>
+              <div className="divide-y divide-border/60">
+                {exerciseStats.map((ex, i) => (
+                  <div key={i} className="px-4 py-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">{ex.name}</p>
+                      <p className="text-xs text-muted-foreground">{ex.completedSets}/{ex.totalSets} sets</p>
+                    </div>
+                    {ex.maxWeight > 0 && (
+                      <span className="text-sm text-muted-foreground">{ex.maxWeight}kg</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <p className="text-sm text-muted-foreground text-center mb-6">
+              Your weights have been saved. Next time, they'll be pre-filled automatically.
             </p>
-            <Button variant="outline" size="lg" className="mt-8" onClick={() => setWorkout(null)}>Start Another</Button>
+            
+            <Button variant="outline" size="lg" className="w-full" onClick={() => setWorkout(null)}>
+              Done
+            </Button>
           </div>
         </div>
         <BottomNav />
@@ -526,7 +606,7 @@ export default function WorkoutPage() {
     );
   }
 
-  return (
+   return (
     <div className="min-h-screen bg-background pb-32 gradient-mesh">
       <div className="max-w-lg mx-auto px-4">
         <PageHeader title={workout?.name ?? "Workout"} subtitle={`${completedSets}/${totalSets} sets completed`} />
@@ -547,15 +627,54 @@ export default function WorkoutPage() {
                       <span className="text-sm text-muted-foreground shrink-0">Set {setIndex + 1}</span>
                     </div>
                     <div className="flex items-center gap-2 mt-2">
+                      {/* Reps control */}
                       <div className="flex items-center gap-1 flex-1 min-w-0 justify-center bg-secondary/50 rounded-lg py-1">
                         <button onClick={() => updateSetValue(ex.id, set.id, 'reps', -1)} className="p-1.5 rounded-lg hover:bg-secondary active:scale-95 transition-all"><Minus className="w-3.5 h-3.5" /></button>
-                        <span className="w-8 text-center text-sm font-medium">{set.reps}</span>
+                        {editingSet?.exerciseId === ex.id && editingSet?.setId === set.id && editingSet?.field === 'reps' ? (
+                          <input
+                            type="number"
+                            inputMode="numeric"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onBlur={handleFinishEdit}
+                            onKeyDown={(e) => e.key === 'Enter' && handleFinishEdit()}
+                            className="w-10 text-center text-sm font-medium bg-background rounded border border-primary px-1 py-0.5"
+                            autoFocus
+                          />
+                        ) : (
+                          <button 
+                            onClick={() => handleStartEdit(ex.id, set.id, 'reps', set.reps)}
+                            className="w-8 text-center text-sm font-medium hover:bg-secondary rounded px-1 py-0.5 transition-colors"
+                          >
+                            {set.reps}
+                          </button>
+                        )}
                         <button onClick={() => updateSetValue(ex.id, set.id, 'reps', 1)} className="p-1.5 rounded-lg hover:bg-secondary active:scale-95 transition-all"><Plus className="w-3.5 h-3.5" /></button>
                         <span className="text-xs text-muted-foreground">reps</span>
                       </div>
+                      {/* Weight control */}
                       <div className="flex items-center gap-1 flex-1 min-w-0 justify-center bg-secondary/50 rounded-lg py-1">
                         <button onClick={() => updateSetValue(ex.id, set.id, 'weight', -2.5)} className="p-1.5 rounded-lg hover:bg-secondary active:scale-95 transition-all"><Minus className="w-3.5 h-3.5" /></button>
-                        <span className="w-10 text-center text-sm font-medium">{set.weight}</span>
+                        {editingSet?.exerciseId === ex.id && editingSet?.setId === set.id && editingSet?.field === 'weight' ? (
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            step="0.5"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            onBlur={handleFinishEdit}
+                            onKeyDown={(e) => e.key === 'Enter' && handleFinishEdit()}
+                            className="w-12 text-center text-sm font-medium bg-background rounded border border-primary px-1 py-0.5"
+                            autoFocus
+                          />
+                        ) : (
+                          <button 
+                            onClick={() => handleStartEdit(ex.id, set.id, 'weight', set.weight)}
+                            className="w-10 text-center text-sm font-medium hover:bg-secondary rounded px-1 py-0.5 transition-colors"
+                          >
+                            {set.weight}
+                          </button>
+                        )}
                         <button onClick={() => updateSetValue(ex.id, set.id, 'weight', 2.5)} className="p-1.5 rounded-lg hover:bg-secondary active:scale-95 transition-all"><Plus className="w-3.5 h-3.5" /></button>
                         <span className="text-xs text-muted-foreground">kg</span>
                       </div>
