@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Plus, X, Search, Flame, Beef, Sparkles, Crown } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Plus, X, Search, Flame, Beef, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +9,8 @@ import { BottomNav } from "@/components/layout/BottomNav";
 import { PremiumPaywall, usePremiumGate } from "@/components/PremiumPaywall";
 import { WeeklyBar } from "@/components/WeeklyBar";
 import { TodayStatus } from "@/components/TodayStatus";
-import { NutritionGuidance } from "@/components/NutritionGuidance";
+import { DailyGuidance } from "@/components/DailyGuidance";
+import { WeeklyReviewCard } from "@/components/WeeklyReviewCard";
 import { 
   getUserProfile, 
   getMealsByDate, 
@@ -18,7 +19,9 @@ import {
   getDailyNutritionTotals,
   getTodayDate,
   generateId,
-  COMMON_FOODS 
+  COMMON_FOODS,
+  recordNutritionDay,
+  hasCoachAccess
 } from "@/lib/storage";
 import { Meal } from "@/lib/types";
 import {
@@ -42,6 +45,7 @@ export default function TodayPage() {
   const profile = getUserProfile();
   const targets = profile?.nutritionTargets ?? { calories: 2000, protein: 150 };
   const totals = useMemo(() => getDailyNutritionTotals(getTodayDate()), [meals]);
+  const coachActive = hasCoachAccess();
 
   const caloriesProgress = Math.min((totals.calories / targets.calories) * 100, 100);
   const proteinProgress = Math.min((totals.protein / targets.protein) * 100, 100);
@@ -51,6 +55,13 @@ export default function TodayPage() {
   const filteredFoods = COMMON_FOODS.filter(food =>
     food.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Record nutrition day when meals change
+  useEffect(() => {
+    if (meals.length > 0) {
+      recordNutritionDay(getTodayDate());
+    }
+  }, [meals]);
 
   const handleAddMeal = () => {
     if (!mealName || !mealCalories) {
@@ -90,8 +101,8 @@ export default function TodayPage() {
     toast.success('Meal removed');
   };
 
-  // Smart adjustment suggestion (Premium feature)
-  const showAdjustment = caloriesRemaining < -200 && isPremium();
+  // Smart adjustment suggestion (Premium feature only)
+  const showAdjustment = caloriesRemaining < -200 && isPremium() && coachActive;
 
   return (
     <div className="min-h-screen bg-background pb-24 gradient-mesh">
@@ -107,6 +118,9 @@ export default function TodayPage() {
 
         {/* Weekly Overview */}
         <WeeklyBar />
+
+        {/* Weekly Review (if due) */}
+        <WeeklyReviewCard onShowPaywall={() => setShowPaywall(true)} />
 
         {/* Today's Primary Action */}
         <TodayStatus />
@@ -160,8 +174,8 @@ export default function TodayPage() {
           </div>
         </div>
 
-        {/* Nutrition Guidance */}
-        <NutritionGuidance targets={targets} />
+        {/* Daily Guidance */}
+        <DailyGuidance onShowPaywall={() => setShowPaywall(true)} />
 
         {/* Smart Adjustment */}
         {showAdjustment && (

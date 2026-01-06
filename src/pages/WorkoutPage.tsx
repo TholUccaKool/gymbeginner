@@ -30,7 +30,8 @@ import {
   DEFAULT_EXERCISES,
   ALL_EXERCISES,
   getUserProfile,
-  getTodayPlannedWorkout
+  getTodayPlannedWorkout,
+  recordCompletedWorkout
 } from "@/lib/storage";
 import { Workout, WorkoutType, WorkoutExercise, Exercise } from "@/lib/types";
 import { toast } from "sonner";
@@ -277,6 +278,10 @@ export default function WorkoutPage() {
     saveWorkout(finished);
     setWorkout(finished);
     setIsActive(false);
+    
+    // Record in coach memory
+    recordCompletedWorkout();
+    
     toast.success("Workout complete! Great job 💪");
   };
 

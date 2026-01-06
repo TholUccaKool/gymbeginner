@@ -3,9 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getUserProfile, saveUserProfile } from "@/lib/storage";
+import { getUserProfile, saveUserProfile, startCoachTrial, initializeCoachMemory } from "@/lib/storage";
 import { CoachProfile } from "@/lib/types";
-import { ArrowLeft, ArrowRight, Check, Crown, Lock, Sparkles } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Crown, Sparkles, Calendar } from "lucide-react";
 import { PremiumPaywall, usePremiumGate } from "@/components/PremiumPaywall";
 
 type Step = 'goal' | 'physique' | 'body' | 'training' | 'selectDays' | 'generating' | 'planReady';
@@ -39,7 +39,7 @@ export default function CoachOnboarding() {
   const [step, setStep] = useState<Step>('goal');
   const [coachProfile, setCoachProfile] = useState<Partial<CoachProfile>>({});
   const [generatedPlan, setGeneratedPlan] = useState<{ calories: number; protein: number } | null>(null);
-  const { showPaywall, setShowPaywall, paywallFeature, checkPremium, isPremium } = usePremiumGate();
+  const { showPaywall, setShowPaywall, paywallFeature, isPremium } = usePremiumGate();
 
   const updateProfile = (updates: Partial<CoachProfile>) => {
     setCoachProfile(prev => ({ ...prev, ...updates }));
@@ -88,25 +88,33 @@ export default function CoachOnboarding() {
     }, 2000);
   };
 
-  // Premium: Apply the generated plan
+  // Apply plan - free for first week (trial), premium after
   const handleApplyPlan = () => {
-    if (!checkPremium("Apply & Save Plan")) {
-      return;
+    const profile = getUserProfile();
+    if (!profile || !generatedPlan || !coachProfile.goal || !coachProfile.trainingDays) return;
+
+    // Start the trial if not premium
+    if (!isPremium()) {
+      startCoachTrial();
     }
     
-    const profile = getUserProfile();
-    if (profile && generatedPlan && coachProfile.goal && coachProfile.trainingDays) {
-      saveUserProfile({
-        ...profile,
-        onboardingComplete: true,
-        coachProfile: coachProfile as CoachProfile,
-        nutritionTargets: generatedPlan,
-      });
-      navigate('/today');
-    }
+    // Initialize coach memory for tracking
+    initializeCoachMemory();
+    
+    // Apply the plan
+    saveUserProfile({
+      ...profile,
+      onboardingComplete: true,
+      coachProfile: coachProfile as CoachProfile,
+      nutritionTargets: generatedPlan,
+      trainingDays: coachProfile.trainingDays,
+      workoutDays: coachProfile.workoutDays,
+    });
+    
+    navigate('/today');
   };
 
-  // Free: Continue without applying (manual tracking only)
+  // Skip - continue with manual tracking only (no coach)
   const handleContinueWithoutApplying = () => {
     const profile = getUserProfile();
     if (profile) {
@@ -353,29 +361,28 @@ export default function CoachOnboarding() {
               </div>
             </div>
 
-            {/* Premium Benefits - only show for free users */}
+            {/* Trial Info - show for free users */}
             {!isPremium() && (
-              <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 mb-6">
-                <div className="flex items-center gap-2 mb-3">
-                  <Crown className="w-5 h-5 text-primary" />
-                  <p className="font-semibold text-sm">Premium unlocks ongoing coaching:</p>
+              <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 mb-6">
+                <div className="flex items-center gap-2 mb-2">
+                  <Calendar className="w-5 h-5 text-amber-500" />
+                  <p className="font-semibold text-sm">Your first week is free</p>
                 </div>
-                <ul className="space-y-2 text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground mb-3">
+                  Try the full coaching experience. After 7 days, you can continue with Premium or keep tracking with static targets.
+                </p>
+                <ul className="space-y-1.5 text-sm text-muted-foreground">
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-primary" />
-                    Apply this plan to your tracker
+                    <Check className="w-3.5 h-3.5 text-amber-500" />
+                    Daily guidance and recommendations
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-primary" />
-                    Weekly workout progression
+                    <Check className="w-3.5 h-3.5 text-amber-500" />
+                    Weekly progress review
                   </li>
                   <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-primary" />
-                    Smart calorie & protein adjustments
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-4 h-4 text-primary" />
-                    Regenerate when goals change
+                    <Check className="w-3.5 h-3.5 text-amber-500" />
+                    Smart target adjustments
                   </li>
                 </ul>
               </div>
@@ -391,8 +398,8 @@ export default function CoachOnboarding() {
                   <>Apply My Plan <Check className="w-4 h-4 ml-2" /></>
                 ) : (
                   <>
-                    <Lock className="w-4 h-4 mr-2" />
-                    Apply Plan with Premium
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Start Free Trial
                   </>
                 )}
               </Button>
@@ -402,7 +409,7 @@ export default function CoachOnboarding() {
                   onClick={handleContinueWithoutApplying}
                   className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
                 >
-                  Continue with manual tracking
+                  Skip — continue with manual tracking
                 </button>
               )}
             </div>

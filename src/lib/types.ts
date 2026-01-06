@@ -13,6 +13,9 @@ export interface UserProfile {
   workoutDays?: number[]; // 0=Sunday, 1=Monday, ..., 6=Saturday
   // Premium subscription status
   isPremium?: boolean;
+  // Coach trial tracking
+  coachTrialStart?: string; // ISO date when coach plan was generated
+  coachTrialExpired?: boolean; // Explicitly set when trial ends
 }
 
 export interface CoachProfile {
@@ -33,6 +36,64 @@ export interface NutritionTargets {
   protein: number;
   carbs?: number;
   fat?: number;
+}
+
+// Coach Memory - tracks user behavior for adaptive coaching
+export interface CoachMemory {
+  id: string;
+  // Weekly stats
+  missedWorkouts: MissedWorkout[];
+  nutritionDays: NutritionDay[];
+  // Streaks
+  currentWorkoutStreak: number;
+  longestWorkoutStreak: number;
+  currentNutritionStreak: number; // Days hitting protein target
+  // Last review date
+  lastWeeklyReview?: string;
+  updatedAt: string;
+}
+
+export interface MissedWorkout {
+  date: string;
+  scheduledType: WorkoutType;
+  reason?: string;
+}
+
+export interface NutritionDay {
+  date: string;
+  targetCalories: number;
+  actualCalories: number;
+  targetProtein: number;
+  actualProtein: number;
+  hitCalorieTarget: boolean;
+  hitProteinTarget: boolean;
+}
+
+// Weekly Review - coach analysis and adjustments
+export interface WeeklyReview {
+  id: string;
+  weekStart: string; // YYYY-MM-DD (Monday)
+  weekEnd: string;   // YYYY-MM-DD (Sunday)
+  createdAt: string;
+  
+  // Summary stats
+  workoutsScheduled: number;
+  workoutsCompleted: number;
+  avgCalories: number;
+  avgProtein: number;
+  calorieConsistency: number; // percentage of days within target
+  proteinConsistency: number;
+  
+  // Coach decision
+  adjustmentType: 'none' | 'calories' | 'protein' | 'both' | 'volume';
+  previousCalories?: number;
+  newCalories?: number;
+  previousProtein?: number;
+  newProtein?: number;
+  
+  // Plain language explanation
+  summary: string;
+  recommendation: string;
 }
 
 // Meals
