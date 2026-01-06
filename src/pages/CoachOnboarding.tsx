@@ -235,10 +235,13 @@ export default function CoachOnboarding() {
         return (
           <div className="animate-slide-up">
             <h2 className="text-xl font-display font-bold mb-2">Training schedule</h2>
-            <p className="text-muted-foreground text-sm mb-6">How many days can you realistically train?</p>
+            <p className="text-muted-foreground text-sm mb-6">
+              How many days can you realistically train?
+              <span className="block text-xs mt-1 opacity-75">Everyone needs at least one rest day</span>
+            </p>
             
-            <div className="grid grid-cols-4 gap-2 mb-6">
-              {[1, 2, 3, 4, 5, 6, 7].map(days => (
+            <div className="grid grid-cols-5 gap-2 mb-6">
+              {[2, 3, 4, 5, 6].map(days => (
                 <button
                   key={days}
                   onClick={() => {
@@ -251,7 +254,7 @@ export default function CoachOnboarding() {
                   }`}
                 >
                   <span className="text-lg font-bold">{days}</span>
-                  <span className="text-xs text-muted-foreground block">day{days > 1 ? 's' : ''}</span>
+                  <span className="text-xs text-muted-foreground block">days</span>
                 </button>
               ))}
             </div>
