@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Plus, X, Search, Flame, Beef, Sparkles } from "lucide-react";
+import { Plus, X, Search, Flame, Beef } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +11,7 @@ import { WeeklyBar } from "@/components/WeeklyBar";
 import { TodayStatus } from "@/components/TodayStatus";
 import { DailyGuidance } from "@/components/DailyGuidance";
 import { WeeklyReviewCard } from "@/components/WeeklyReviewCard";
+import { CalorieAdjustmentCard } from "@/components/CalorieAdjustmentCard";
 import { 
   getUserProfile, 
   getMealsByDate, 
@@ -23,6 +24,7 @@ import {
   recordNutritionDay,
   hasCoachAccess
 } from "@/lib/storage";
+import { getTodayCalorieTarget } from "@/lib/calorieAdjustment";
 import { Meal } from "@/lib/types";
 import {
   Dialog,
@@ -41,9 +43,18 @@ export default function TodayPage() {
   const [mealProtein, setMealProtein] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(true);
+  const [adjustedCalorieTarget, setAdjustedCalorieTarget] = useState<number | null>(null);
   const { showPaywall, setShowPaywall, paywallFeature, isPremium } = usePremiumGate();
   const profile = getUserProfile();
-  const targets = profile?.nutritionTargets ?? { calories: 2000, protein: 150 };
+  const baseTargets = profile?.nutritionTargets ?? { calories: 2000, protein: 150 };
+  
+  // Use adjusted target if accepted, otherwise use base target
+  const effectiveCalorieTarget = adjustedCalorieTarget ?? getTodayCalorieTarget();
+  const targets = { 
+    calories: effectiveCalorieTarget, 
+    protein: baseTargets.protein 
+  };
+  
   const totals = useMemo(() => getDailyNutritionTotals(getTodayDate()), [meals]);
   const coachActive = hasCoachAccess();
 
@@ -101,8 +112,10 @@ export default function TodayPage() {
     toast.success('Meal removed');
   };
 
-  // Smart adjustment suggestion (Premium feature only)
-  const showAdjustment = caloriesRemaining < -200 && isPremium() && coachActive;
+  // Handle adjustment accepted
+  const handleAdjustmentAccepted = (newTarget: number) => {
+    setAdjustedCalorieTarget(newTarget);
+  };
 
   return (
     <div className="min-h-screen bg-background pb-24 gradient-mesh">
@@ -118,6 +131,14 @@ export default function TodayPage() {
 
         {/* Weekly Overview */}
         <WeeklyBar />
+
+        {/* Smart Calorie Adjustment (shows if yesterday was over) */}
+        {coachActive && (
+          <CalorieAdjustmentCard 
+            onAdjustmentAccepted={handleAdjustmentAccepted}
+            onShowPaywall={() => setShowPaywall(true)}
+          />
+        )}
 
         {/* Weekly Review (if due) */}
         <WeeklyReviewCard onShowPaywall={() => setShowPaywall(true)} />
@@ -177,20 +198,6 @@ export default function TodayPage() {
         {/* Daily Guidance */}
         <DailyGuidance onShowPaywall={() => setShowPaywall(true)} />
 
-        {/* Smart Adjustment */}
-        {showAdjustment && (
-          <div className="bg-accent/10 border border-accent/30 rounded-2xl p-4 mb-6 animate-slide-up flex items-start gap-3">
-            <div className="w-8 h-8 rounded-xl bg-accent/20 flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-4 h-4 text-accent" />
-            </div>
-            <div>
-              <p className="text-sm font-medium mb-1">Don't stress!</p>
-              <p className="text-sm text-muted-foreground">
-                You're {Math.abs(caloriesRemaining)} calories over. Consider a lighter day tomorrow or a longer walk.
-              </p>
-            </div>
-          </div>
-        )}
 
         {/* Meals List */}
         <div className="space-y-3 mb-6">
