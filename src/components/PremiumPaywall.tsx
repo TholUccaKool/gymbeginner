@@ -17,10 +17,10 @@ interface PremiumPaywallProps {
 }
 
 const PREMIUM_FEATURES = [
-  { icon: Brain, label: "Apply & save your personalized plan", description: "Put your custom plan into action" },
-  { icon: Sparkles, label: "Regenerate anytime", description: "Update when goals or schedule change" },
-  { icon: TrendingUp, label: "Weekly adjustments", description: "Progressive workouts & nutrition tweaks" },
-  { icon: Crown, label: "Ongoing coaching", description: "You're not doing this alone" },
+  { icon: Brain, label: "Weekly adjustments", description: "Targets that adapt to your progress" },
+  { icon: Sparkles, label: "Ongoing coaching", description: "Daily guidance and recommendations" },
+  { icon: TrendingUp, label: "Smart progression", description: "Coach remembers your history" },
+  { icon: Crown, label: "Regenerate plans", description: "Update when goals or schedule change" },
 ];
 
 export function PremiumPaywall({ open, onOpenChange, feature }: PremiumPaywallProps) {
@@ -55,9 +55,9 @@ export function PremiumPaywall({ open, onOpenChange, feature }: PremiumPaywallPr
               <Crown className="w-7 h-7 text-white" />
             </div>
           </div>
-          <DialogTitle className="text-center text-xl">Get Ongoing Coaching</DialogTitle>
+          <DialogTitle className="text-center text-xl">Continue with Coaching</DialogTitle>
           <p className="text-center text-sm text-muted-foreground mt-1">
-            Stop guessing. Start progressing.
+            Your first week was free. Keep the guidance going.
           </p>
         </DialogHeader>
 
@@ -139,7 +139,7 @@ export function PremiumPaywall({ open, onOpenChange, feature }: PremiumPaywallPr
           onClick={() => onOpenChange(false)}
           className="text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
         >
-          Not now — continue tracking
+          Not now — continue with static targets
         </button>
 
         <p className="text-center text-xs text-muted-foreground">

@@ -1,10 +1,12 @@
-import { UserProfile, Meal, Workout, WeeklyPlan, FoodSuggestion, WorkoutType } from './types';
+import { UserProfile, Meal, Workout, WeeklyPlan, FoodSuggestion, WorkoutType, CoachMemory, WeeklyReview, NutritionDay } from './types';
 
 const STORAGE_KEYS = {
   USER_PROFILE: 'fittrack_user_profile',
   MEALS: 'fittrack_meals',
   WORKOUTS: 'fittrack_workouts',
   WEEKLY_PLANS: 'fittrack_weekly_plans',
+  COACH_MEMORY: 'fittrack_coach_memory',
+  WEEKLY_REVIEWS: 'fittrack_weekly_reviews',
 } as const;
 
 // Generic storage helpers
@@ -422,3 +424,335 @@ export const ALL_EXERCISES = [
   { id: 'stair-climber', name: 'Stair Climber', muscleGroup: 'Full Body' },
   { id: 'elliptical', name: 'Elliptical', muscleGroup: 'Full Body' },
 ];
+
+// ============= Coach Memory =============
+
+export const getCoachMemory = (): CoachMemory | null => {
+  return getItem<CoachMemory>(STORAGE_KEYS.COACH_MEMORY);
+};
+
+export const saveCoachMemory = (memory: CoachMemory): void => {
+  setItem(STORAGE_KEYS.COACH_MEMORY, memory);
+};
+
+export const initializeCoachMemory = (): CoachMemory => {
+  const existing = getCoachMemory();
+  if (existing) return existing;
+  
+  const memory: CoachMemory = {
+    id: generateId(),
+    missedWorkouts: [],
+    nutritionDays: [],
+    currentWorkoutStreak: 0,
+    longestWorkoutStreak: 0,
+    currentNutritionStreak: 0,
+    updatedAt: new Date().toISOString(),
+  };
+  saveCoachMemory(memory);
+  return memory;
+};
+
+export const recordNutritionDay = (date: string): void => {
+  const memory = getCoachMemory() || initializeCoachMemory();
+  const profile = getUserProfile();
+  const targets = profile?.nutritionTargets ?? { calories: 2000, protein: 150 };
+  const totals = getDailyNutritionTotals(date);
+  
+  // Remove existing entry for this date
+  const filtered = memory.nutritionDays.filter(d => d.date !== date);
+  
+  const calorieThreshold = targets.calories * 0.1; // Within 10%
+  const hitCalories = Math.abs(totals.calories - targets.calories) <= calorieThreshold;
+  const hitProtein = totals.protein >= targets.protein * 0.9; // At least 90%
+  
+  const nutritionDay: NutritionDay = {
+    date,
+    targetCalories: targets.calories,
+    actualCalories: totals.calories,
+    targetProtein: targets.protein,
+    actualProtein: totals.protein,
+    hitCalorieTarget: hitCalories,
+    hitProteinTarget: hitProtein,
+  };
+  
+  filtered.push(nutritionDay);
+  
+  // Keep last 30 days
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const recent = filtered.filter(d => new Date(d.date) >= thirtyDaysAgo);
+  
+  // Update streak
+  let streak = 0;
+  const sorted = [...recent].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  for (const day of sorted) {
+    if (day.hitProteinTarget) {
+      streak++;
+    } else {
+      break;
+    }
+  }
+  
+  saveCoachMemory({
+    ...memory,
+    nutritionDays: recent,
+    currentNutritionStreak: streak,
+    updatedAt: new Date().toISOString(),
+  });
+};
+
+export const recordMissedWorkout = (date: string, scheduledType: WorkoutType): void => {
+  const memory = getCoachMemory() || initializeCoachMemory();
+  
+  // Check if already recorded
+  if (memory.missedWorkouts.some(m => m.date === date)) return;
+  
+  memory.missedWorkouts.push({ date, scheduledType });
+  
+  // Keep last 30 days
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const recent = memory.missedWorkouts.filter(m => new Date(m.date) >= thirtyDaysAgo);
+  
+  // Reset workout streak
+  saveCoachMemory({
+    ...memory,
+    missedWorkouts: recent,
+    currentWorkoutStreak: 0,
+    updatedAt: new Date().toISOString(),
+  });
+};
+
+export const recordCompletedWorkout = (): void => {
+  const memory = getCoachMemory() || initializeCoachMemory();
+  
+  const newStreak = memory.currentWorkoutStreak + 1;
+  saveCoachMemory({
+    ...memory,
+    currentWorkoutStreak: newStreak,
+    longestWorkoutStreak: Math.max(memory.longestWorkoutStreak, newStreak),
+    updatedAt: new Date().toISOString(),
+  });
+};
+
+// ============= Weekly Reviews =============
+
+export const getWeeklyReviews = (): WeeklyReview[] => {
+  return getItem<WeeklyReview[]>(STORAGE_KEYS.WEEKLY_REVIEWS) ?? [];
+};
+
+export const getLatestWeeklyReview = (): WeeklyReview | null => {
+  const reviews = getWeeklyReviews();
+  return reviews.length > 0 ? reviews[reviews.length - 1] : null;
+};
+
+export const saveWeeklyReview = (review: WeeklyReview): void => {
+  const reviews = getWeeklyReviews();
+  reviews.push(review);
+  // Keep last 12 weeks
+  const trimmed = reviews.slice(-12);
+  setItem(STORAGE_KEYS.WEEKLY_REVIEWS, trimmed);
+};
+
+// ============= Coach Trial Logic =============
+
+export const isCoachTrialActive = (): boolean => {
+  const profile = getUserProfile();
+  if (!profile) return false;
+  if (profile.isPremium) return true; // Premium users always have access
+  if (profile.coachTrialExpired) return false;
+  if (!profile.coachTrialStart) return true; // Never started = can still use
+  
+  const trialStart = new Date(profile.coachTrialStart);
+  const now = new Date();
+  const daysSinceStart = Math.floor((now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24));
+  
+  return daysSinceStart < 7; // 7-day trial
+};
+
+export const startCoachTrial = (): void => {
+  const profile = getUserProfile();
+  if (!profile) return;
+  if (profile.coachTrialStart) return; // Already started
+  
+  saveUserProfile({
+    ...profile,
+    coachTrialStart: new Date().toISOString(),
+  });
+};
+
+export const getDaysLeftInTrial = (): number => {
+  const profile = getUserProfile();
+  if (!profile?.coachTrialStart) return 7;
+  if (profile.isPremium) return -1; // Premium, no limit
+  
+  const trialStart = new Date(profile.coachTrialStart);
+  const now = new Date();
+  const daysSinceStart = Math.floor((now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24));
+  
+  return Math.max(0, 7 - daysSinceStart);
+};
+
+export const hasCoachAccess = (): boolean => {
+  const profile = getUserProfile();
+  if (!profile) return false;
+  return profile.isPremium || isCoachTrialActive();
+};
+
+// ============= Weekly Review Generation =============
+
+export const shouldShowWeeklyReview = (): boolean => {
+  const profile = getUserProfile();
+  if (!profile || !hasCoachAccess()) return false;
+  
+  const memory = getCoachMemory();
+  if (!memory?.lastWeeklyReview) return true; // Never reviewed
+  
+  const lastReview = new Date(memory.lastWeeklyReview);
+  const now = new Date();
+  const daysSinceReview = Math.floor((now.getTime() - lastReview.getTime()) / (1000 * 60 * 60 * 24));
+  
+  return daysSinceReview >= 7;
+};
+
+export const generateWeeklyReview = (): WeeklyReview | null => {
+  const profile = getUserProfile();
+  const memory = getCoachMemory();
+  if (!profile || !memory) return null;
+  
+  const now = new Date();
+  const weekEnd = new Date(now);
+  weekEnd.setDate(now.getDate() - now.getDay()); // Last Sunday
+  const weekStart = new Date(weekEnd);
+  weekStart.setDate(weekEnd.getDate() - 6); // Previous Monday
+  
+  const targets = profile.nutritionTargets;
+  const workoutDays = profile.workoutDays || profile.coachProfile?.workoutDays || [];
+  
+  // Get workouts for the week
+  const workouts = getWorkouts().filter(w => {
+    const d = new Date(w.date);
+    return d >= weekStart && d <= weekEnd && w.completed;
+  });
+  
+  // Get nutrition data for the week
+  const nutritionDays = memory.nutritionDays.filter(n => {
+    const d = new Date(n.date);
+    return d >= weekStart && d <= weekEnd;
+  });
+  
+  const workoutsScheduled = workoutDays.length;
+  const workoutsCompleted = workouts.length;
+  const avgCalories = nutritionDays.length > 0 
+    ? Math.round(nutritionDays.reduce((sum, d) => sum + d.actualCalories, 0) / nutritionDays.length)
+    : 0;
+  const avgProtein = nutritionDays.length > 0
+    ? Math.round(nutritionDays.reduce((sum, d) => sum + d.actualProtein, 0) / nutritionDays.length)
+    : 0;
+  const calorieConsistency = nutritionDays.length > 0
+    ? Math.round((nutritionDays.filter(d => d.hitCalorieTarget).length / nutritionDays.length) * 100)
+    : 0;
+  const proteinConsistency = nutritionDays.length > 0
+    ? Math.round((nutritionDays.filter(d => d.hitProteinTarget).length / nutritionDays.length) * 100)
+    : 0;
+  
+  // Determine adjustment
+  let adjustmentType: WeeklyReview['adjustmentType'] = 'none';
+  let newCalories = targets.calories;
+  let newProtein = targets.protein;
+  let summary = '';
+  let recommendation = '';
+  
+  const goal = profile.coachProfile?.goal;
+  const completionRate = workoutsScheduled > 0 ? workoutsCompleted / workoutsScheduled : 0;
+  
+  // Logic for adjustments based on goals and consistency
+  if (goal === 'weight-loss' || goal === 'leaner') {
+    if (calorieConsistency >= 80 && completionRate >= 0.8) {
+      // Doing well, slight reduction
+      adjustmentType = 'calories';
+      newCalories = targets.calories - 50;
+      summary = "Great week! You've been consistent with both workouts and nutrition.";
+      recommendation = "Reducing calories by 50 to keep progress moving. Stay the course.";
+    } else if (calorieConsistency < 50) {
+      summary = "Calories were inconsistent this week. That's okay—it happens.";
+      recommendation = "Focus on hitting your calorie target more consistently before we adjust anything.";
+    } else {
+      summary = "Solid effort this week. You're building good habits.";
+      recommendation = "Keep your current targets. Consistency is key right now.";
+    }
+  } else if (goal === 'muscle-gain') {
+    if (proteinConsistency >= 80 && completionRate >= 0.8) {
+      adjustmentType = 'calories';
+      newCalories = targets.calories + 50;
+      summary = "Excellent week! Protein and training are on point.";
+      recommendation = "Adding 50 calories to support muscle growth. Keep training hard.";
+    } else if (proteinConsistency < 60) {
+      summary = "Protein intake was lower than ideal this week.";
+      recommendation = "Focus on hitting your protein target—it's crucial for muscle building.";
+    } else {
+      summary = "Good progress this week. Training is building momentum.";
+      recommendation = "Maintain current targets and focus on progressive overload in your workouts.";
+    }
+  } else {
+    // healthier or default
+    if (completionRate >= 0.8 && calorieConsistency >= 70) {
+      summary = "You had a great week! Workouts and nutrition are aligned.";
+      recommendation = "No changes needed. You're doing exactly what you should be doing.";
+    } else if (completionRate < 0.5) {
+      summary = "Training was light this week. Life happens—don't stress.";
+      recommendation = "Aim to complete at least half your scheduled workouts next week.";
+    } else {
+      summary = "A decent week overall. Room to improve, but you're on track.";
+      recommendation = "Keep focusing on consistency. Small steps lead to big results.";
+    }
+  }
+  
+  // Store whether we need calorie/protein changes for cleaner logic
+  // Cast to string to avoid TypeScript narrowing issues from control flow
+  const adjType = adjustmentType as string;
+  const needsCalorieChange = adjType === 'calories' || adjType === 'both';
+  const needsProteinChange = adjType === 'protein' || adjType === 'both';
+  
+  const review: WeeklyReview = {
+    id: generateId(),
+    weekStart: weekStart.toISOString().split('T')[0],
+    weekEnd: weekEnd.toISOString().split('T')[0],
+    createdAt: new Date().toISOString(),
+    workoutsScheduled,
+    workoutsCompleted,
+    avgCalories,
+    avgProtein,
+    calorieConsistency,
+    proteinConsistency,
+    adjustmentType,
+    previousCalories: targets.calories,
+    newCalories: needsCalorieChange ? newCalories : undefined,
+    previousProtein: targets.protein,
+    newProtein: needsProteinChange ? newProtein : undefined,
+    summary,
+    recommendation,
+  };
+  
+  // Save review and apply changes if premium
+  saveWeeklyReview(review);
+  
+  if (profile.isPremium && needsCalorieChange) {
+    saveUserProfile({
+      ...profile,
+      nutritionTargets: {
+        ...targets,
+        calories: newCalories,
+      },
+    });
+  }
+  
+  // Update coach memory
+  saveCoachMemory({
+    ...memory,
+    lastWeeklyReview: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  });
+  
+  return review;
+};

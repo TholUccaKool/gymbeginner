@@ -1,18 +1,18 @@
-import { Coffee, Dumbbell, Play, ArrowRight } from "lucide-react";
+import { Coffee, Dumbbell, Play, ArrowRight, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getUserProfile, getTodayPlannedWorkout, getWorkoutByDate, getTodayDate, DEFAULT_EXERCISES } from "@/lib/storage";
+import { getUserProfile, getTodayPlannedWorkout, getWorkoutByDate, getTodayDate, DEFAULT_EXERCISES, hasCoachAccess } from "@/lib/storage";
 import { useNavigate } from "react-router-dom";
 import { WorkoutType } from "@/lib/types";
 
-const WORKOUT_TYPE_INFO: Record<WorkoutType, { label: string; emoji: string }> = {
-  push: { label: 'Push Day', emoji: '💪' },
-  pull: { label: 'Pull Day', emoji: '🎯' },
-  legs: { label: 'Leg Day', emoji: '🦵' },
-  'full-body': { label: 'Full Body', emoji: '⚡' },
-  upper: { label: 'Upper Body', emoji: '🏋️' },
-  lower: { label: 'Lower Body', emoji: '🦿' },
-  custom: { label: 'Custom Workout', emoji: '✨' },
-  rest: { label: 'Rest Day', emoji: '😴' },
+const WORKOUT_TYPE_INFO: Record<WorkoutType, { label: string; emoji: string; reason: string }> = {
+  push: { label: 'Push Day', emoji: '💪', reason: 'Chest, shoulders, and triceps work together in pressing movements.' },
+  pull: { label: 'Pull Day', emoji: '🎯', reason: 'Back and biceps work together in pulling movements.' },
+  legs: { label: 'Leg Day', emoji: '🦵', reason: 'Strong legs are the foundation for everything else.' },
+  'full-body': { label: 'Full Body', emoji: '⚡', reason: 'Efficient training that hits all major muscle groups.' },
+  upper: { label: 'Upper Body', emoji: '🏋️', reason: 'Chest, back, shoulders, and arms in one session.' },
+  lower: { label: 'Lower Body', emoji: '🦿', reason: 'Quads, hamstrings, and glutes for a strong base.' },
+  custom: { label: 'Custom Workout', emoji: '✨', reason: 'Your personalized training session.' },
+  rest: { label: 'Rest Day', emoji: '😴', reason: 'Recovery is when your muscles grow.' },
 };
 
 interface TodayStatusProps {
@@ -24,6 +24,7 @@ export function TodayStatus({ onStartWorkout }: TodayStatusProps) {
   const profile = getUserProfile();
   const todayPlan = getTodayPlannedWorkout();
   const existingWorkout = getWorkoutByDate(getTodayDate());
+  const coachActive = hasCoachAccess();
   
   const hasSchedule = profile?.workoutDays?.length || profile?.coachProfile?.workoutDays?.length;
   
@@ -39,7 +40,7 @@ export function TodayStatus({ onStartWorkout }: TodayStatusProps) {
             <p className="text-sm text-muted-foreground">Workout complete</p>
             <h3 className="font-display font-bold text-lg">{existingWorkout.name}</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Great job today! Focus on recovery and nutrition.
+              Great job! Focus on recovery and nutrition now.
             </p>
           </div>
         </div>
@@ -58,6 +59,9 @@ export function TodayStatus({ onStartWorkout }: TodayStatusProps) {
           <div className="flex-1">
             <p className="text-sm text-muted-foreground">No schedule set</p>
             <h3 className="font-display font-bold text-lg">Ready to train?</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              You can work out anytime. Track what you do.
+            </p>
           </div>
           <Button 
             size="lg"
@@ -80,10 +84,15 @@ export function TodayStatus({ onStartWorkout }: TodayStatusProps) {
             <Coffee className="w-7 h-7 text-muted-foreground" />
           </div>
           <div className="flex-1">
-            <p className="text-sm text-muted-foreground">Scheduled rest</p>
+            {coachActive && (
+              <div className="flex items-center gap-1.5 mb-1">
+                <Crown className="w-3 h-3 text-amber-500" />
+                <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">Coach scheduled</span>
+              </div>
+            )}
             <h3 className="font-display font-bold text-lg">Rest Day</h3>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Recovery is when your muscles grow. Take it easy.
+              {WORKOUT_TYPE_INFO.rest.reason} Take it easy.
             </p>
           </div>
         </div>
@@ -111,13 +120,23 @@ export function TodayStatus({ onStartWorkout }: TodayStatusProps) {
           <span className="text-2xl">{typeInfo.emoji}</span>
         </div>
         <div className="flex-1">
-          <p className="text-sm text-muted-foreground">Today's workout</p>
+          {coachActive && (
+            <div className="flex items-center gap-1.5 mb-1">
+              <Crown className="w-3 h-3 text-amber-500" />
+              <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">Coach scheduled</span>
+            </div>
+          )}
           <h3 className="font-display font-bold text-lg">{typeInfo.label}</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             {exerciseCount} exercises · ~45 min
           </p>
         </div>
       </div>
+      
+      {/* Coach explanation */}
+      <p className="text-xs text-muted-foreground mb-4 px-1">
+        {typeInfo.reason}
+      </p>
       
       <Button 
         size="xl" 
@@ -126,10 +145,6 @@ export function TodayStatus({ onStartWorkout }: TodayStatusProps) {
       >
         <Play className="w-5 h-5 mr-2" /> Start Workout
       </Button>
-      
-      <p className="text-xs text-muted-foreground text-center mt-3">
-        This workout targets your {workoutType.replace('-', ' ')} muscles based on your schedule.
-      </p>
     </div>
   );
 }
