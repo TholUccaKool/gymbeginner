@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { saveUserProfile, generateId, getUserProfile } from "@/lib/storage";
 import { UserProfile } from "@/lib/types";
-import { Dumbbell, Sparkles, ArrowRight, Check, Calendar } from "lucide-react";
+import { Dumbbell, Sparkles, ArrowRight, Check, Calendar, ArrowLeft } from "lucide-react";
 
 const WEEKDAYS = [
   { id: 0, label: 'Sun' },
@@ -106,7 +106,14 @@ export default function Onboarding() {
 
   if (step === 'trainingDays') {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative">
+        <button
+          onClick={() => setStep('welcome')}
+          className="absolute top-6 left-6 p-2 rounded-lg hover:bg-secondary transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+        </button>
+        
         <div className="animate-slide-up max-w-sm w-full">
           <div className="flex items-center justify-center gap-3 mb-6">
             <div className="w-10 h-10 rounded-xl bg-primary-muted flex items-center justify-center">
@@ -154,7 +161,14 @@ export default function Onboarding() {
     const maxDays = trainingDays || 0;
     
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative">
+        <button
+          onClick={() => setStep('trainingDays')}
+          className="absolute top-6 left-6 p-2 rounded-lg hover:bg-secondary transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+        </button>
+        
         <div className="animate-slide-up max-w-sm w-full">
           <h1 className="text-2xl font-display font-bold mb-2 text-center">
             Which days work best?
@@ -203,7 +217,14 @@ export default function Onboarding() {
 
   if (step === 'experience') {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative">
+        <button
+          onClick={() => setStep('selectDays')}
+          className="absolute top-6 left-6 p-2 rounded-lg hover:bg-secondary transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5 text-muted-foreground" />
+        </button>
+        
         <div className="animate-slide-up text-center max-w-sm w-full">
           <h1 className="text-2xl font-display font-bold mb-2">
             One more thing...
