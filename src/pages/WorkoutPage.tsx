@@ -528,22 +528,26 @@ export default function WorkoutPage() {
               </div>
               <div className="divide-y divide-border/60">
                 {ex.sets.map((set, setIndex) => (
-                  <div key={set.id} className={cn("flex items-center gap-3 p-3.5 transition-colors", set.completed && "bg-primary-muted/50")}>
-                    <button onClick={() => toggleSet(ex.id, set.id)} className={cn("w-9 h-9 rounded-xl border-2 flex items-center justify-center transition-all", set.completed ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30 hover:border-primary")}>
-                      {set.completed && <Check className="w-4 h-4" />}
-                    </button>
-                    <span className="text-sm text-muted-foreground w-10">Set {setIndex + 1}</span>
-                    <div className="flex items-center gap-1 ml-auto">
-                      <button onClick={() => updateSetValue(ex.id, set.id, 'reps', -1)} className="p-2 rounded-lg hover:bg-secondary"><Minus className="w-3 h-3" /></button>
-                      <span className="w-10 text-center text-sm font-medium">{set.reps}</span>
-                      <button onClick={() => updateSetValue(ex.id, set.id, 'reps', 1)} className="p-2 rounded-lg hover:bg-secondary"><Plus className="w-3 h-3" /></button>
-                      <span className="text-xs text-muted-foreground ml-1">reps</span>
+                  <div key={set.id} className={cn("p-3 transition-colors", set.completed && "bg-primary-muted/50")}>
+                    <div className="flex items-center gap-2 mb-2 sm:mb-0">
+                      <button onClick={() => toggleSet(ex.id, set.id)} className={cn("w-8 h-8 shrink-0 rounded-xl border-2 flex items-center justify-center transition-all", set.completed ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30 hover:border-primary")}>
+                        {set.completed && <Check className="w-4 h-4" />}
+                      </button>
+                      <span className="text-sm text-muted-foreground shrink-0">Set {setIndex + 1}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => updateSetValue(ex.id, set.id, 'weight', -2.5)} className="p-2 rounded-lg hover:bg-secondary"><Minus className="w-3 h-3" /></button>
-                      <span className="w-12 text-center text-sm font-medium">{set.weight}</span>
-                      <button onClick={() => updateSetValue(ex.id, set.id, 'weight', 2.5)} className="p-2 rounded-lg hover:bg-secondary"><Plus className="w-3 h-3" /></button>
-                      <span className="text-xs text-muted-foreground ml-1">kg</span>
+                    <div className="flex items-center gap-2 mt-2">
+                      <div className="flex items-center gap-1 flex-1 min-w-0 justify-center bg-secondary/50 rounded-lg py-1">
+                        <button onClick={() => updateSetValue(ex.id, set.id, 'reps', -1)} className="p-1.5 rounded-lg hover:bg-secondary active:scale-95 transition-all"><Minus className="w-3.5 h-3.5" /></button>
+                        <span className="w-8 text-center text-sm font-medium">{set.reps}</span>
+                        <button onClick={() => updateSetValue(ex.id, set.id, 'reps', 1)} className="p-1.5 rounded-lg hover:bg-secondary active:scale-95 transition-all"><Plus className="w-3.5 h-3.5" /></button>
+                        <span className="text-xs text-muted-foreground">reps</span>
+                      </div>
+                      <div className="flex items-center gap-1 flex-1 min-w-0 justify-center bg-secondary/50 rounded-lg py-1">
+                        <button onClick={() => updateSetValue(ex.id, set.id, 'weight', -2.5)} className="p-1.5 rounded-lg hover:bg-secondary active:scale-95 transition-all"><Minus className="w-3.5 h-3.5" /></button>
+                        <span className="w-10 text-center text-sm font-medium">{set.weight}</span>
+                        <button onClick={() => updateSetValue(ex.id, set.id, 'weight', 2.5)} className="p-1.5 rounded-lg hover:bg-secondary active:scale-95 transition-all"><Plus className="w-3.5 h-3.5" /></button>
+                        <span className="text-xs text-muted-foreground">kg</span>
+                      </div>
                     </div>
                   </div>
                 ))}
