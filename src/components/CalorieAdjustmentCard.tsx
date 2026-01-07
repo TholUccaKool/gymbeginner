@@ -48,8 +48,6 @@ export function CalorieAdjustmentCard({ onAdjustmentAccepted, onShowPaywall }: C
   // Don't show if no adjustment or dismissed
   if (!adjustment || dismissed) return null;
 
-  const reduction = adjustment.originalTarget - adjustment.adjustedTarget;
-
   return (
     <div className="bg-card border border-border/60 rounded-2xl p-4 mb-4 animate-slide-up shadow-sm">
       <div className="flex items-start gap-3">
@@ -58,17 +56,16 @@ export function CalorieAdjustmentCard({ onAdjustmentAccepted, onShowPaywall }: C
         </div>
         
         <div className="flex-1 min-w-0">
-          <h3 className="font-medium text-sm mb-1">Keeping the week balanced</h3>
+          <h3 className="font-medium text-sm mb-1">{adjustment.reason}</h3>
           <p className="text-sm text-muted-foreground mb-3">
-            Yesterday was a bit higher than planned — totally fine. 
-            Want to aim for {adjustment.adjustedTarget} calories today to balance the week?
+            {adjustment.explanation}
           </p>
           
           <div className="flex items-center gap-2 text-xs text-muted-foreground mb-3">
-            <span className="bg-secondary px-2 py-1 rounded-lg">
+            <span className="bg-secondary px-2 py-1 rounded-lg font-medium">
               {adjustment.originalTarget} → {adjustment.adjustedTarget} cal
             </span>
-            <span>(-{reduction} today)</span>
+            <span className="text-primary/80">(-{adjustment.reduction} today)</span>
           </div>
 
           <div className="flex gap-2">
@@ -78,13 +75,14 @@ export function CalorieAdjustmentCard({ onAdjustmentAccepted, onShowPaywall }: C
               className="flex-1 h-9"
             >
               <Check className="w-4 h-4 mr-1.5" />
-              Sounds good
+              Adjust today
             </Button>
             <Button 
               size="sm" 
               variant="ghost" 
               onClick={handleDismiss}
               className="h-9 px-3 text-muted-foreground"
+              title="Keep original target"
             >
               <X className="w-4 h-4" />
             </Button>

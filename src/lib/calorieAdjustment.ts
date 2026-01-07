@@ -11,7 +11,11 @@ export interface CalorieAdjustment {
 export interface DailyAdjustmentState {
   originalTarget: number;
   adjustedTarget: number;
+  surplus: number;
+  reduction: number;
+  remainingDays: number;
   reason: string;
+  explanation: string;
   surplusDate: string;
   accepted: boolean;
   dismissed: boolean;
@@ -127,24 +131,66 @@ export const calculateAdjustment = (): DailyAdjustmentState | null => {
   // But cap at 15% reduction max per day to avoid extreme deficits
   const maxDailyReduction = Math.round(originalTarget * 0.15);
   const idealDistribution = Math.round(surplus / remainingDays);
-  const reduction = Math.min(idealDistribution, maxDailyReduction);
+  let reduction = Math.min(idealDistribution, maxDailyReduction);
   
   // Minimum adjusted target should be at least 1200 for safety
-  const adjustedTarget = Math.max(1200, originalTarget - reduction);
+  let adjustedTarget = Math.max(1200, originalTarget - reduction);
+  
+  // Recalculate actual reduction after safety floor
+  reduction = originalTarget - adjustedTarget;
   
   // Don't suggest if the reduction is tiny (<50 cal)
-  if (originalTarget - adjustedTarget < 50) return null;
+  if (reduction < 50) return null;
+
+  // Create clear, explanatory text
+  const reason = generateReason(surplus);
+  const explanation = generateExplanation(surplus, reduction, remainingDays, adjustedTarget);
 
   const adjustment: DailyAdjustmentState = {
     originalTarget,
     adjustedTarget,
-    reason: `Yesterday you ate ${surplus} extra calories`,
+    surplus,
+    reduction,
+    remainingDays,
+    reason,
+    explanation,
     surplusDate: yesterdayDate,
     accepted: false,
     dismissed: false,
   };
 
   return adjustment;
+};
+
+// Generate a friendly reason based on surplus size
+const generateReason = (surplus: number): string => {
+  if (surplus < 200) {
+    return "Yesterday was slightly over target";
+  } else if (surplus < 400) {
+    return "Yesterday was a bit higher than planned";
+  } else {
+    return "Yesterday had more calories than usual";
+  }
+};
+
+// Generate clear explanation of the adjustment logic
+const generateExplanation = (
+  surplus: number, 
+  reduction: number, 
+  remainingDays: number,
+  adjustedTarget: number
+): string => {
+  const roundedSurplus = Math.round(surplus / 50) * 50; // Round to nearest 50
+  
+  if (remainingDays === 1) {
+    return `You ate about ${roundedSurplus} kcal over yesterday. Today's suggested target is ${adjustedTarget} kcal to help balance the week.`;
+  }
+  
+  if (reduction < 100) {
+    return `You ate about ${roundedSurplus} kcal over yesterday. A small ${reduction} kcal reduction today will keep you on track.`;
+  }
+  
+  return `You ate about ${roundedSurplus} kcal over yesterday. Spreading this across ${remainingDays} days means about ${reduction} kcal less today — bringing your target to ${adjustedTarget} kcal.`;
 };
 
 // Accept the adjustment (update today's effective target)
