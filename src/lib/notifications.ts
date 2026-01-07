@@ -5,7 +5,6 @@ export interface NotificationSettings {
   newDayReminder: boolean;
   workoutDayReminder: boolean;
   mealTrackingReminder: boolean;
-  reminderTime: string; // HH:mm format
 }
 
 const STORAGE_KEY = 'fittrack_notification_settings';
@@ -15,7 +14,6 @@ const DEFAULT_SETTINGS: NotificationSettings = {
   newDayReminder: true,
   workoutDayReminder: true,
   mealTrackingReminder: false,
-  reminderTime: '09:00',
 };
 
 export const getNotificationSettings = (): NotificationSettings => {
