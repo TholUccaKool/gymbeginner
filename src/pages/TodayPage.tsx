@@ -25,6 +25,7 @@ import {
   hasCoachAccess
 } from "@/lib/storage";
 import { getTodayCalorieTarget } from "@/lib/calorieAdjustment";
+import { getSimulatedDate } from "@/lib/debugDate";
 import { Meal } from "@/lib/types";
 import {
   Dialog,
@@ -117,12 +118,15 @@ export default function TodayPage() {
     setAdjustedCalorieTarget(newTarget);
   };
 
+  // Use simulated date for display
+  const displayDate = getSimulatedDate();
+
   return (
     <div className="min-h-screen bg-background pb-24 gradient-mesh">
       <div className="max-w-lg mx-auto px-4">
         <PageHeader 
           title="Today" 
-          subtitle={new Date().toLocaleDateString('en-US', { 
+          subtitle={displayDate.toLocaleDateString('en-US', { 
             weekday: 'long', 
             month: 'short', 
             day: 'numeric' 

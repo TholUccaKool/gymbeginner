@@ -177,7 +177,15 @@ export const generateId = (): string => {
 };
 
 // Get today's date in YYYY-MM-DD format
+// Uses simulated date if debug mode is active
 export const getTodayDate = (): string => {
+  // Import dynamically to avoid circular dependency
+  const offset = localStorage.getItem('fittrack_debug_date_offset');
+  if (offset && (import.meta.env.DEV || localStorage.getItem('fittrack_debug_enabled') === 'true')) {
+    const date = new Date();
+    date.setDate(date.getDate() + parseInt(offset, 10));
+    return date.toISOString().split('T')[0];
+  }
   return new Date().toISOString().split('T')[0];
 };
 

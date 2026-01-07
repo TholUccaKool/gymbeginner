@@ -77,12 +77,24 @@ export const clearDailyAdjustmentState = (): void => {
   localStorage.removeItem(DAILY_STATE_KEY);
 };
 
+// Get the current simulated/real date
+const getCurrentDate = (): Date => {
+  const offset = localStorage.getItem('fittrack_debug_date_offset');
+  if (offset && (import.meta.env.DEV || localStorage.getItem('fittrack_debug_enabled') === 'true')) {
+    const date = new Date();
+    date.setDate(date.getDate() + parseInt(offset, 10));
+    return date;
+  }
+  return new Date();
+};
+
 // Check yesterday's calories and calculate adjustment
 export const checkForSurplus = (): { surplus: number; yesterdayDate: string } | null => {
   const profile = getUserProfile();
   if (!profile) return null;
 
-  const yesterday = format(subDays(new Date(), 1), 'yyyy-MM-dd');
+  const today = getCurrentDate();
+  const yesterday = format(subDays(today, 1), 'yyyy-MM-dd');
   const yesterdayMeals = getMeals().filter(m => m.date === yesterday);
   
   // Only check if they actually logged meals yesterday
@@ -102,7 +114,7 @@ export const checkForSurplus = (): { surplus: number; yesterdayDate: string } | 
 
 // Calculate remaining days in the week (including today)
 const getRemainingWeekDays = (): number => {
-  const today = new Date();
+  const today = getCurrentDate();
   const dayOfWeek = today.getDay(); // 0 = Sunday
   // Remaining days including today (Sunday = 1, Monday = 6, etc.)
   return dayOfWeek === 0 ? 1 : 7 - dayOfWeek + 1;
