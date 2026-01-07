@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { saveUserProfile, generateId, getUserProfile } from "@/lib/storage";
+import { saveUserProfile, generateId, getUserProfile, hasCompletedOnboarding } from "@/lib/storage";
 import { UserProfile } from "@/lib/types";
 import { Dumbbell, Sparkles, ArrowRight, Check, Calendar, ArrowLeft } from "lucide-react";
 
@@ -17,10 +17,16 @@ const WEEKDAYS = [
 
 export default function Onboarding() {
   const navigate = useNavigate();
-  // New flow: welcome -> experience -> (if experienced: trainingDays -> selectDays -> today) | (if new: coach onboarding)
   const [step, setStep] = useState<'welcome' | 'experience' | 'trainingDays' | 'selectDays'>('welcome');
   const [trainingDays, setTrainingDays] = useState<number | null>(null);
   const [selectedDays, setSelectedDays] = useState<number[]>([]);
+
+  // Redirect if already completed onboarding
+  useEffect(() => {
+    if (hasCompletedOnboarding()) {
+      navigate('/today', { replace: true });
+    }
+  }, [navigate]);
 
   const handleTrainingDaysSelect = (days: number) => {
     setTrainingDays(days);
@@ -49,12 +55,12 @@ export default function Onboarding() {
   const handleExperienceSelect = (level: 'experienced' | 'new') => {
     if (level === 'new') {
       // New users: create minimal profile and go directly to coach onboarding
-      // Coach onboarding will ask for training days
+      // Coach onboarding will ask for training days, goals, etc.
       const profile: UserProfile = {
         id: generateId(),
         experienceLevel: level,
         createdAt: new Date().toISOString(),
-        onboardingComplete: false,
+        onboardingComplete: false, // Will be set to true after coach onboarding
         trainingDays: 3, // Default, will be overwritten in coach onboarding
         workoutDays: [],
         nutritionTargets: {
@@ -162,7 +168,7 @@ export default function Onboarding() {
     );
   }
 
-  // Training days selection (only for experienced users)
+  // Training days selection (only for experienced users) - 2-6 days only
   if (step === 'trainingDays') {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6 relative">
