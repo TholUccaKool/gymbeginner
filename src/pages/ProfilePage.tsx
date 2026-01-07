@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings, Sparkles, Target, User, ChevronRight, Trash2, Moon, Sun, Crown } from "lucide-react";
+import { Settings, Sparkles, Target, User, ChevronRight, Trash2, Moon, Sun, Crown, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +17,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { NotificationSettings } from "@/components/NotificationSettings";
 
 export default function ProfilePage() {
   const profile = getUserProfile();
@@ -210,8 +211,21 @@ export default function ProfilePage() {
           </div>
         </button>
 
+        {/* Notifications */}
+        <div className="bg-card rounded-2xl border border-border/60 overflow-hidden mb-4 shadow-sm animate-slide-up" style={{ animationDelay: '200ms' }}>
+          <div className="p-4 border-b border-border/60">
+            <div className="flex items-center gap-2">
+              <Bell className="w-5 h-5 text-muted-foreground" />
+              <h3 className="font-semibold">Reminders</h3>
+            </div>
+          </div>
+          <div className="p-4">
+            <NotificationSettings />
+          </div>
+        </div>
+
         {/* Settings */}
-        <div className="bg-card rounded-2xl border border-border/60 overflow-hidden mb-6 shadow-sm animate-slide-up" style={{ animationDelay: '200ms' }}>
+        <div className="bg-card rounded-2xl border border-border/60 overflow-hidden mb-6 shadow-sm animate-slide-up" style={{ animationDelay: '250ms' }}>
           <div className="p-4 border-b border-border/60">
             <div className="flex items-center gap-2">
               <Settings className="w-5 h-5 text-muted-foreground" />
@@ -247,7 +261,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Premium Status */}
-        <div className="bg-card rounded-2xl border border-dashed border-amber-400/50 p-4 mb-6 animate-slide-up" style={{ animationDelay: '250ms' }}>
+        <div className="bg-card rounded-2xl border border-dashed border-amber-400/50 p-4 mb-6 animate-slide-up" style={{ animationDelay: '300ms' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Crown className="w-5 h-5 text-amber-500" />
@@ -273,7 +287,7 @@ export default function ProfilePage() {
         </div>
 
         {/* App Info */}
-        <div className="text-center text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '300ms' }}>
+        <div className="text-center text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '350ms' }}>
           <p className="font-medium">FitTrack v1.0</p>
           <p className="mt-1 text-xs">Built with care for your fitness journey</p>
         </div>
