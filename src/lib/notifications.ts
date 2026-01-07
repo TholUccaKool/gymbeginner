@@ -90,58 +90,49 @@ export const sendNotification = async (
 // Calm, supportive notification messages
 export const NOTIFICATION_MESSAGES = {
   newDay: {
-    title: 'Good morning ☀️',
-    body: 'New day, new plan. Ready when you are.',
+    title: 'New day ☀️',
+    body: 'Ready to continue your plan?',
   },
   workoutDay: {
     title: 'Workout day 💪',
-    body: "Today is a workout day. Let's get it done.",
+    body: 'Today is a workout day.',
   },
   mealTracking: {
-    title: 'How did today go? 🍽️',
+    title: 'Evening check-in 🍽️',
     body: "Don't forget to log today's meals.",
   },
 };
 
-// Schedule check for notifications (called on app load)
-export const checkAndScheduleNotifications = async (): Promise<void> => {
+// Check and send notifications on app open/return (event-based, not scheduled)
+export const checkAndSendNotifications = async (): Promise<void> => {
   const settings = getNotificationSettings();
   if (!settings.enabled) return;
   if (Notification.permission !== 'granted') return;
 
-  // Get stored last notification dates
-  const lastNewDay = localStorage.getItem('fittrack_last_newday_notification');
-  const lastMealReminder = localStorage.getItem('fittrack_last_meal_notification');
   const today = new Date().toISOString().split('T')[0];
+  const lastNewDay = localStorage.getItem('fittrack_last_newday_notification');
+  const lastWorkoutReminder = localStorage.getItem('fittrack_last_workout_notification');
+  const lastMealReminder = localStorage.getItem('fittrack_last_meal_notification');
 
-  // Check if we should send new day reminder
+  // New day reminder - triggers once per day on first app open
   if (settings.newDayReminder && lastNewDay !== today) {
-    const now = new Date();
-    const [hours, minutes] = settings.reminderTime.split(':').map(Number);
-    const reminderTime = new Date();
-    reminderTime.setHours(hours, minutes, 0, 0);
-
-    // Send if past reminder time and haven't sent today
-    if (now >= reminderTime) {
-      await sendNotification(
-        NOTIFICATION_MESSAGES.newDay.title,
-        { body: NOTIFICATION_MESSAGES.newDay.body, tag: 'new-day' }
-      );
-      localStorage.setItem('fittrack_last_newday_notification', today);
-    }
+    await sendNotification(
+      NOTIFICATION_MESSAGES.newDay.title,
+      { body: NOTIFICATION_MESSAGES.newDay.body, tag: 'new-day' }
+    );
+    localStorage.setItem('fittrack_last_newday_notification', today);
   }
 
-  // Check workout day reminder
-  if (settings.workoutDayReminder) {
-    const profile = localStorage.getItem('fittrack_user_profile');
-    if (profile) {
-      const parsed = JSON.parse(profile);
-      const workoutDays = parsed.workoutDays ?? parsed.coachProfile?.workoutDays ?? [];
-      const dayOfWeek = new Date().getDay();
-      
-      if (workoutDays.includes(dayOfWeek)) {
-        const lastWorkoutReminder = localStorage.getItem('fittrack_last_workout_notification');
-        if (lastWorkoutReminder !== today) {
+  // Workout day reminder - triggers once per workout day on app open
+  if (settings.workoutDayReminder && lastWorkoutReminder !== today) {
+    try {
+      const profile = localStorage.getItem('fittrack_user_profile');
+      if (profile) {
+        const parsed = JSON.parse(profile);
+        const workoutDays = parsed.workoutDays ?? parsed.coachProfile?.workoutDays ?? [];
+        const dayOfWeek = new Date().getDay();
+        
+        if (workoutDays.includes(dayOfWeek)) {
           await sendNotification(
             NOTIFICATION_MESSAGES.workoutDay.title,
             { body: NOTIFICATION_MESSAGES.workoutDay.body, tag: 'workout-day' }
@@ -149,23 +140,34 @@ export const checkAndScheduleNotifications = async (): Promise<void> => {
           localStorage.setItem('fittrack_last_workout_notification', today);
         }
       }
+    } catch {
+      // Ignore parse errors
     }
   }
 
-  // Meal tracking reminder (evening check - after 7pm)
+  // Evening meal reminder - triggers once per evening if no meals logged
   if (settings.mealTrackingReminder && lastMealReminder !== today) {
-    const now = new Date();
-    if (now.getHours() >= 19) {
-      const meals = localStorage.getItem('fittrack_meals');
-      const todayMeals = meals ? JSON.parse(meals).filter((m: { date: string }) => m.date === today) : [];
-      
-      if (todayMeals.length === 0) {
-        await sendNotification(
-          NOTIFICATION_MESSAGES.mealTracking.title,
-          { body: NOTIFICATION_MESSAGES.mealTracking.body, tag: 'meal-tracking' }
-        );
-        localStorage.setItem('fittrack_last_meal_notification', today);
+    const hour = new Date().getHours();
+    if (hour >= 18) { // 6pm or later
+      try {
+        const meals = localStorage.getItem('fittrack_meals');
+        const todayMeals = meals 
+          ? JSON.parse(meals).filter((m: { date: string }) => m.date === today) 
+          : [];
+        
+        if (todayMeals.length === 0) {
+          await sendNotification(
+            NOTIFICATION_MESSAGES.mealTracking.title,
+            { body: NOTIFICATION_MESSAGES.mealTracking.body, tag: 'meal-tracking' }
+          );
+          localStorage.setItem('fittrack_last_meal_notification', today);
+        }
+      } catch {
+        // Ignore parse errors
       }
     }
   }
 };
+
+// Legacy alias for backwards compatibility
+export const checkAndScheduleNotifications = checkAndSendNotifications;
