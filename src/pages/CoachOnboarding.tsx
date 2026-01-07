@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getUserProfile, saveUserProfile, startCoachTrial, initializeCoachMemory } from "@/lib/storage";
+import { getUserProfile, saveUserProfile, startCoachTrial, initializeCoachMemory, hasCompletedOnboarding } from "@/lib/storage";
 import { CoachProfile } from "@/lib/types";
 import { ArrowLeft, ArrowRight, Check, Crown, Sparkles, Calendar } from "lucide-react";
 import { PremiumPaywall, usePremiumGate } from "@/components/PremiumPaywall";
@@ -40,6 +40,13 @@ export default function CoachOnboarding() {
   const [coachProfile, setCoachProfile] = useState<Partial<CoachProfile>>({});
   const [generatedPlan, setGeneratedPlan] = useState<{ calories: number; protein: number } | null>(null);
   const { showPaywall, setShowPaywall, paywallFeature, isPremium } = usePremiumGate();
+
+  // Redirect if already completed onboarding (prevent asking same questions twice)
+  useEffect(() => {
+    if (hasCompletedOnboarding()) {
+      navigate('/today', { replace: true });
+    }
+  }, [navigate]);
 
   const updateProfile = (updates: Partial<CoachProfile>) => {
     setCoachProfile(prev => ({ ...prev, ...updates }));
@@ -101,7 +108,7 @@ export default function CoachOnboarding() {
     // Initialize coach memory for tracking
     initializeCoachMemory();
     
-    // Apply the plan
+    // Apply the plan - mark onboarding as complete
     saveUserProfile({
       ...profile,
       onboardingComplete: true,
@@ -188,6 +195,7 @@ export default function CoachOnboarding() {
                 <Input
                   id="age"
                   type="number"
+                  inputMode="numeric"
                   placeholder="25"
                   className="mt-1.5"
                   value={coachProfile.age ?? ''}
@@ -201,6 +209,7 @@ export default function CoachOnboarding() {
                   <Input
                     id="height"
                     type="number"
+                    inputMode="numeric"
                     placeholder="175"
                     className="mt-1.5"
                     value={coachProfile.height ?? ''}
@@ -212,6 +221,7 @@ export default function CoachOnboarding() {
                   <Input
                     id="weight"
                     type="number"
+                    inputMode="numeric"
                     placeholder="70"
                     className="mt-1.5"
                     value={coachProfile.weight ?? ''}
@@ -240,6 +250,7 @@ export default function CoachOnboarding() {
               <span className="block text-xs mt-1 opacity-75">Everyone needs at least one rest day</span>
             </p>
             
+            {/* Only show 2-6 days - removed 7-day option */}
             <div className="grid grid-cols-5 gap-2 mb-6">
               {[2, 3, 4, 5, 6].map(days => (
                 <button
