@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Bell, BellOff, Dumbbell, Utensils, Sun, Clock } from 'lucide-react';
+import { Bell, BellOff, Dumbbell, Utensils, Sun } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import {
   getNotificationSettings,
@@ -89,7 +87,7 @@ export function NotificationSettings() {
         <div>
           <p className="font-medium text-sm">Stay on track</p>
           <p className="text-xs text-muted-foreground mt-1">
-            Get calm, helpful reminders for workouts and meals
+            Get reminders when you open the app
           </p>
         </div>
         <Button
@@ -122,23 +120,6 @@ export function NotificationSettings() {
         />
       </div>
 
-      {/* Reminder time */}
-      <div className="p-4 bg-secondary/30 rounded-xl">
-        <div className="flex items-center gap-2 mb-3">
-          <Clock className="w-4 h-4 text-muted-foreground" />
-          <Label htmlFor="reminder-time" className="text-sm font-medium">
-            Reminder Time
-          </Label>
-        </div>
-        <Input
-          id="reminder-time"
-          type="time"
-          value={settings.reminderTime}
-          onChange={(e) => updateSetting('reminderTime', e.target.value)}
-          className="h-10 rounded-lg"
-        />
-      </div>
-
       {/* Individual notification types */}
       <div className="space-y-2">
         <div className="flex items-center justify-between p-3 rounded-lg hover:bg-secondary/30 transition-colors">
@@ -147,7 +128,7 @@ export function NotificationSettings() {
             <div>
               <p className="text-sm font-medium">New Day Reminder</p>
               <p className="text-xs text-muted-foreground">
-                "New day, new plan. Ready when you are."
+                When you open the app on a new day
               </p>
             </div>
           </div>
@@ -163,7 +144,7 @@ export function NotificationSettings() {
             <div>
               <p className="text-sm font-medium">Workout Day</p>
               <p className="text-xs text-muted-foreground">
-                "Today is a workout day. Let's get it done."
+                When you open the app on workout days
               </p>
             </div>
           </div>
@@ -177,9 +158,9 @@ export function NotificationSettings() {
           <div className="flex items-center gap-3">
             <Utensils className="w-4 h-4 text-accent" />
             <div>
-              <p className="text-sm font-medium">Meal Tracking</p>
+              <p className="text-sm font-medium">Evening Meal Check</p>
               <p className="text-xs text-muted-foreground">
-                Evening reminder if no meals logged
+                If no meals logged when you open in the evening
               </p>
             </div>
           </div>
@@ -191,7 +172,7 @@ export function NotificationSettings() {
       </div>
 
       <p className="text-[10px] text-muted-foreground text-center px-4">
-        Notifications are calm and supportive — never spammy. You're always in control.
+        Reminders appear when you open or return to the app — we can't send scheduled notifications in the background.
       </p>
     </div>
   );
