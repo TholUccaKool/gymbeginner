@@ -30,9 +30,18 @@ function RootRedirect() {
 }
 
 function AppContent() {
-  // Check for notifications on app load
+  // Check for notifications on app load and when returning to app
   useEffect(() => {
     checkAndScheduleNotifications();
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkAndScheduleNotifications();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
   return (
