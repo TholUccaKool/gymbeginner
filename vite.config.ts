@@ -17,9 +17,9 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "pwa-192x192.png", "pwa-512x512.png"],
       manifest: {
-        name: "FitTrack - Your Fitness Companion",
+        name: "FitTrack",
         short_name: "FitTrack",
-        description: "Your calm, focused fitness companion for workouts and nutrition tracking",
+        description: "AI-powered fitness & nutrition tracking app",
         theme_color: "#7c3aed",
         background_color: "#0a0a0b",
         display: "standalone",
