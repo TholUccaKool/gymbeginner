@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { hasCompletedOnboarding, getUserProfile } from "@/lib/storage";
 import { checkAndScheduleNotifications } from "@/lib/notifications";
+import { initializeNativeNotifications, isNativePlatform } from "@/lib/nativeNotifications";
 import Onboarding from "./pages/Onboarding";
 import CoachOnboarding from "./pages/CoachOnboarding";
 import TodayPage from "./pages/TodayPage";
@@ -30,18 +31,24 @@ function RootRedirect() {
 }
 
 function AppContent() {
-  // Check for notifications on app load and when returning to app
+  // Initialize notifications on app load
   useEffect(() => {
-    checkAndScheduleNotifications();
+    // Initialize native notifications if on Capacitor
+    if (isNativePlatform()) {
+      initializeNativeNotifications();
+    } else {
+      // PWA fallback: check notifications on app open/return
+      checkAndScheduleNotifications();
 
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        checkAndScheduleNotifications();
-      }
-    };
+      const handleVisibilityChange = () => {
+        if (document.visibilityState === 'visible') {
+          checkAndScheduleNotifications();
+        }
+      };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }
   }, []);
 
   return (
