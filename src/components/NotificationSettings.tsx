@@ -10,16 +10,25 @@ import {
   requestNotificationPermission,
   NotificationSettings as NotificationSettingsType,
 } from '@/lib/notifications';
+import { isNativePlatform } from '@/lib/nativeNotifications';
+import { NativeNotificationSettings } from './NativeNotificationSettings';
 import { toast } from 'sonner';
 
 export function NotificationSettings() {
   const [settings, setSettings] = useState<NotificationSettingsType>(getNotificationSettings);
   const [permission, setPermission] = useState<NotificationPermission | 'unsupported'>('default');
   const [isRequesting, setIsRequesting] = useState(false);
+  const [isNative, setIsNative] = useState(false);
 
   useEffect(() => {
+    setIsNative(isNativePlatform());
     setPermission(getNotificationPermission());
   }, []);
+
+  // If running on native platform, show native notification settings
+  if (isNative) {
+    return <NativeNotificationSettings />;
+  }
 
   const handleEnableNotifications = async () => {
     if (permission === 'denied') {
