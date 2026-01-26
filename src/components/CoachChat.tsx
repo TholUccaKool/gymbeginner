@@ -87,14 +87,19 @@ export function CoachChat() {
       }
     } catch (error) {
       console.error("Failed to send message:", error);
+      const errorMsg = error instanceof Error ? error.message : "Sorry, I'm having trouble right now. Please try again in a moment.";
       const errorMessage: ChatMessage = {
         id: generateMessageId(),
         role: "assistant",
-        content: "Sorry, I'm having trouble right now. Please try again in a moment.",
+        content: errorMsg,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
-      toast.error("Failed to get response");
+      
+      // Show toast only for non-rate-limit errors
+      if (!errorMsg.toLowerCase().includes("rate limit") && !errorMsg.toLowerCase().includes("too many requests")) {
+        toast.error("Failed to get response");
+      }
     } finally {
       setIsLoading(false);
     }
