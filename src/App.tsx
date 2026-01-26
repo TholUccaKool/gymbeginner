@@ -52,7 +52,9 @@ function AppContent() {
     }
   }, []);
 
-  const showCoachChat = hasCompletedOnboarding();
+  // Show coach chat if user has started onboarding (has profile) or completed it
+  const profile = getUserProfile();
+  const showCoachChat = hasCompletedOnboarding() || !!profile;
 
   return (
     <BrowserRouter>
