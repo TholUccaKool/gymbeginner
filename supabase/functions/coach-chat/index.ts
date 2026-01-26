@@ -1,0 +1,229 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+interface ChatMessage {
+  role: "user" | "assistant" | "system";
+  content: string;
+}
+
+interface UserContext {
+  nutritionTargets: { calories: number; protein: number };
+  todayMeals: { name: string; calories: number; protein?: number }[];
+  todayTotals: { calories: number; protein: number };
+  workoutDays: number[];
+  trainingDays: number;
+  todayWorkout: { type: string; completed: boolean } | null;
+  dayOfWeek: number;
+  todayDate: string;
+}
+
+const SYSTEM_PROMPT = `You are FitTrack Coach, a friendly and supportive AI fitness coach. Your role is to help users manage their fitness journey through natural conversation.
+
+## Your Personality
+- Supportive, encouraging, never judgmental
+- Understand that life happens - be flexible with plans
+- Keep responses concise and actionable
+- Use a warm, friendly tone
+
+## What You Can Do
+1. **Log Meals**: Parse natural language meal descriptions and estimate calories/protein
+2. **Manage Workouts**: Help move, skip, or reschedule workouts
+3. **Answer Questions**: Explain their current plan, targets, and progress
+4. **Adapt Plans**: Adjust when users are busy, tired, sick, or traveling
+
+## Response Format
+Always respond with a JSON object containing:
+{
+  "message": "Your friendly response to the user",
+  "actions": [
+    {
+      "type": "log_meal" | "skip_workout" | "move_workout" | "mark_rest_day" | "none",
+      "data": { ... action-specific data ... }
+    }
+  ],
+  "requiresConfirmation": true | false
+}
+
+### Action Types:
+
+**log_meal**: When user mentions eating something
+{
+  "type": "log_meal",
+  "data": {
+    "name": "food description",
+    "calories": estimated_number,
+    "protein": estimated_number
+  }
+}
+
+**skip_workout**: When user can't work out today
+{
+  "type": "skip_workout",
+  "data": {
+    "date": "YYYY-MM-DD",
+    "reason": "optional reason"
+  }
+}
+
+**move_workout**: When user wants to swap workout days
+{
+  "type": "move_workout",
+  "data": {
+    "fromDate": "YYYY-MM-DD",
+    "toDate": "YYYY-MM-DD"
+  }
+}
+
+**mark_rest_day**: When user needs rest
+{
+  "type": "mark_rest_day",
+  "data": {
+    "date": "YYYY-MM-DD"
+  }
+}
+
+## Meal Estimation Guidelines
+- Use common nutritional knowledge to estimate
+- Round to reasonable numbers
+- If unsure about quantity, assume a standard serving
+- Include protein estimates when possible
+
+## Important Rules
+1. NEVER shame or guilt the user
+2. NEVER give medical advice
+3. NEVER suggest extreme diets or workout regimens
+4. If intent is unclear, ask a clarifying question (with "actions": [] and "requiresConfirmation": false)
+5. Always confirm before applying changes (requiresConfirmation: true for actions)
+6. Be honest if you can't estimate something accurately
+
+## Context Awareness
+You have access to the user's current context including:
+- Their calorie and protein targets
+- Meals logged today
+- Their workout schedule
+- Today's planned workout
+
+Use this information to give personalized, relevant responses.`;
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { messages, userContext } = await req.json() as {
+      messages: ChatMessage[];
+      userContext: UserContext;
+    };
+
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) {
+      throw new Error("LOVABLE_API_KEY is not configured");
+    }
+
+    // Build context message
+    const contextMessage = buildContextMessage(userContext);
+
+    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "google/gemini-3-flash-preview",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: contextMessage },
+          ...messages,
+        ],
+        temperature: 0.7,
+        max_tokens: 1024,
+      }),
+    });
+
+    if (!response.ok) {
+      if (response.status === 429) {
+        return new Response(
+          JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }),
+          { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      if (response.status === 402) {
+        return new Response(
+          JSON.stringify({ error: "AI credits depleted. Please try again later." }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      const errorText = await response.text();
+      console.error("AI gateway error:", response.status, errorText);
+      return new Response(
+        JSON.stringify({ error: "Failed to get AI response" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const data = await response.json();
+    const assistantMessage = data.choices?.[0]?.message?.content;
+
+    if (!assistantMessage) {
+      throw new Error("No response from AI");
+    }
+
+    // Try to parse the JSON response from the AI
+    let parsedResponse;
+    try {
+      // Extract JSON from potential markdown code blocks
+      const jsonMatch = assistantMessage.match(/```(?:json)?\s*([\s\S]*?)```/) || 
+                        [null, assistantMessage];
+      const jsonStr = jsonMatch[1].trim();
+      parsedResponse = JSON.parse(jsonStr);
+    } catch {
+      // If parsing fails, wrap the response in a basic structure
+      parsedResponse = {
+        message: assistantMessage,
+        actions: [],
+        requiresConfirmation: false,
+      };
+    }
+
+    return new Response(JSON.stringify(parsedResponse), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("Coach chat error:", error);
+    return new Response(
+      JSON.stringify({ 
+        error: error instanceof Error ? error.message : "Unknown error" 
+      }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
+
+function buildContextMessage(ctx: UserContext): string {
+  const dayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const workoutDayNames = ctx.workoutDays.map(d => dayNames[d]).join(", ");
+  
+  const caloriesRemaining = ctx.nutritionTargets.calories - ctx.todayTotals.calories;
+  const proteinRemaining = ctx.nutritionTargets.protein - ctx.todayTotals.protein;
+
+  return `## Current User Context (${dayNames[ctx.dayOfWeek]}, ${ctx.todayDate})
+
+### Nutrition Targets
+- Daily calories: ${ctx.nutritionTargets.calories} cal
+- Daily protein: ${ctx.nutritionTargets.protein}g
+
+### Today's Progress
+- Calories consumed: ${ctx.todayTotals.calories} cal (${caloriesRemaining > 0 ? `${caloriesRemaining} remaining` : `${Math.abs(caloriesRemaining)} over`})
+- Protein consumed: ${ctx.todayTotals.protein}g (${proteinRemaining > 0 ? `${proteinRemaining}g remaining` : 'target met!'})
+- Meals logged today: ${ctx.todayMeals.length > 0 ? ctx.todayMeals.map(m => m.name).join(", ") : "None yet"}
+
+### Workout Schedule
+- Training days: ${ctx.trainingDays} per week (${workoutDayNames})
+- Today's workout: ${ctx.todayWorkout ? `${ctx.todayWorkout.type} (${ctx.todayWorkout.completed ? 'completed' : 'pending'})` : 'Rest day'}`;
+}
