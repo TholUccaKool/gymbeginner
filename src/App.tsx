@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { hasCompletedOnboarding, getUserProfile } from "@/lib/storage";
 import { checkAndScheduleNotifications } from "@/lib/notifications";
 import { initializeNativeNotifications, isNativePlatform } from "@/lib/nativeNotifications";
+import { CoachChat } from "@/components/CoachChat";
 import Onboarding from "./pages/Onboarding";
 import CoachOnboarding from "./pages/CoachOnboarding";
 import TodayPage from "./pages/TodayPage";
@@ -51,6 +52,8 @@ function AppContent() {
     }
   }, []);
 
+  const showCoachChat = hasCompletedOnboarding();
+
   return (
     <BrowserRouter>
       <Routes>
@@ -62,6 +65,9 @@ function AppContent() {
         <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
         <Route path="*" element={<NotFound />} />
       </Routes>
+      
+      {/* Global Coach Chat - only show after onboarding */}
+      {showCoachChat && <CoachChat />}
     </BrowserRouter>
   );
 }
