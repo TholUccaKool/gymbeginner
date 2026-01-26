@@ -84,10 +84,18 @@ export async function sendMessageToCoach(
 
   if (error) {
     console.error("Coach chat error:", error);
+    // Check for rate limit error
+    if (error.message?.includes("429") || error.message?.toLowerCase().includes("rate limit")) {
+      throw new Error("I'm getting too many requests right now. Please wait a moment and try again.");
+    }
     throw new Error(error.message || "Failed to get coach response");
   }
 
-  if (data.error) {
+  if (data?.error) {
+    // Handle specific error types with friendly messages
+    if (data.error.toLowerCase().includes("rate limit")) {
+      throw new Error("I'm getting too many requests right now. Please wait a moment and try again.");
+    }
     throw new Error(data.error);
   }
 
