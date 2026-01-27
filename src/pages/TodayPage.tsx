@@ -27,6 +27,7 @@ import {
 import { getTodayCalorieTarget } from "@/lib/calorieAdjustment";
 import { getSimulatedDate } from "@/lib/debugDate";
 import { Meal } from "@/lib/types";
+import { onDataUpdated } from "@/lib/events";
 import {
   Dialog,
   DialogContent,
@@ -74,6 +75,13 @@ export default function TodayPage() {
       recordNutritionDay(getTodayDate());
     }
   }, [meals]);
+
+  // Listen for data updates from external sources (e.g., AI Coach)
+  useEffect(() => {
+    return onDataUpdated(() => {
+      setMeals(getMealsByDate(getTodayDate()));
+    });
+  }, []);
 
   const handleAddMeal = () => {
     if (!mealName || !mealCalories) {

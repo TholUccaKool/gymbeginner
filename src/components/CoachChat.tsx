@@ -11,6 +11,7 @@ import {
   applyCoachAction, 
   generateMessageId 
 } from "@/lib/coachChat";
+import { emitDataUpdated } from "@/lib/events";
 import { toast } from "sonner";
 
 const INITIAL_MESSAGE: ChatMessage = {
@@ -84,6 +85,8 @@ export function CoachChat() {
             toast.success(result.message);
           }
         });
+        // Emit event to refresh UI
+        emitDataUpdated();
       }
     } catch (error) {
       console.error("Failed to send message:", error);
@@ -125,6 +128,9 @@ export function CoachChat() {
     ));
 
     setPendingActions(null);
+
+    // Emit event to refresh UI immediately
+    emitDataUpdated();
 
     // Add confirmation message
     const confirmMessage: ChatMessage = {
