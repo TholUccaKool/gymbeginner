@@ -33,18 +33,15 @@ function RootRedirect() {
 }
 
 function AppContent() {
-  // Track whether to show coach chat - updates reactively via event system
+  // Track whether to show coach chat - ONLY after onboarding is fully completed
   const [showCoachChat, setShowCoachChat] = useState(() => {
-    const profile = getUserProfile();
-    return hasCompletedOnboarding() || !!profile;
+    return hasCompletedOnboarding();
   });
 
-  // Listen for profile updates to show coach chat immediately after onboarding
+  // Listen for profile updates to show coach chat immediately after onboarding completes
   useEffect(() => {
     return onProfileUpdated(() => {
-      const profile = getUserProfile();
-      const shouldShow = hasCompletedOnboarding() || !!profile;
-      setShowCoachChat(shouldShow);
+      setShowCoachChat(hasCompletedOnboarding());
     });
   }, []);
 
