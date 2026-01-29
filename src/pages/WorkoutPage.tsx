@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Check, Plus, Minus, Coffee, Dumbbell, Calendar, Play, Trophy, Search, X, Sparkles, GripVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/PageHeader";
@@ -35,6 +35,7 @@ import {
   getSuggestedWeightForExercise,
   saveExerciseHistoryFromWorkout
 } from "@/lib/storage";
+import { onDataUpdated } from "@/lib/events";
 import { Workout, WorkoutType, WorkoutExercise, Exercise } from "@/lib/types";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -120,6 +121,14 @@ export default function WorkoutPage() {
   const isCoachUser = profile?.experienceLevel === 'new' && profile?.coachProfile;
   const todayPlan = getTodayPlannedWorkout();
   const dayName = DAY_NAMES[new Date().getDay()];
+
+  // Listen for data updates from external sources (e.g., AI Coach)
+  useEffect(() => {
+    return onDataUpdated(() => {
+      // Refresh workout data from storage
+      setWorkout(getWorkoutByDate(getTodayDate()));
+    });
+  }, []);
 
   const completedSets = useMemo(() => {
     if (!workout) return 0;
