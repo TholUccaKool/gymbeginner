@@ -46,6 +46,8 @@ export default function TodayPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [adjustedCalorieTarget, setAdjustedCalorieTarget] = useState<number | null>(null);
+  // Key to force refresh of child components when data changes externally
+  const [refreshKey, setRefreshKey] = useState(0);
   const { showPaywall, setShowPaywall, paywallFeature, isPremium } = usePremiumGate();
   const profile = getUserProfile();
   const baseTargets = profile?.nutritionTargets ?? { calories: 2000, protein: 150 };
@@ -57,7 +59,8 @@ export default function TodayPage() {
     protein: baseTargets.protein 
   };
   
-  const totals = useMemo(() => getDailyNutritionTotals(getTodayDate()), [meals]);
+  // Include refreshKey to force recalculation when data changes externally
+  const totals = useMemo(() => getDailyNutritionTotals(getTodayDate()), [meals, refreshKey]);
   const coachActive = hasCoachAccess();
 
   const caloriesProgress = Math.min((totals.calories / targets.calories) * 100, 100);
@@ -77,10 +80,16 @@ export default function TodayPage() {
   }, [meals]);
 
   // Listen for data updates from external sources (e.g., AI Coach)
+  // This works across web, Android (Capacitor), and iOS
   useEffect(() => {
-    return onDataUpdated(() => {
+    const handleDataUpdate = () => {
+      // Refresh meals from storage
       setMeals(getMealsByDate(getTodayDate()));
-    });
+      // Increment refresh key to force child components to re-render
+      setRefreshKey(prev => prev + 1);
+    };
+
+    return onDataUpdated(handleDataUpdate);
   }, []);
 
   const handleAddMeal = () => {
@@ -156,7 +165,7 @@ export default function TodayPage() {
         <WeeklyReviewCard onShowPaywall={() => setShowPaywall(true)} />
 
         {/* Today's Primary Action */}
-        <TodayStatus />
+        <TodayStatus key={refreshKey} />
 
         {/* Progress Rings */}
         <div className="flex justify-center gap-10 py-6 animate-scale-in">
