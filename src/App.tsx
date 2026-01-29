@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { hasCompletedOnboarding, getUserProfile } from "@/lib/storage";
+import { onProfileUpdated } from "@/lib/events";
 import { checkAndScheduleNotifications } from "@/lib/notifications";
 import { initializeNativeNotifications, isNativePlatform } from "@/lib/nativeNotifications";
 import { CoachChat } from "@/components/CoachChat";
@@ -32,30 +33,19 @@ function RootRedirect() {
 }
 
 function AppContent() {
-  // Track whether to show coach chat - updates on navigation/profile changes
+  // Track whether to show coach chat - updates reactively via event system
   const [showCoachChat, setShowCoachChat] = useState(() => {
     const profile = getUserProfile();
     return hasCompletedOnboarding() || !!profile;
   });
 
-  // Re-check visibility when route changes or on interval to catch profile updates
+  // Listen for profile updates to show coach chat immediately after onboarding
   useEffect(() => {
-    const checkVisibility = () => {
+    return onProfileUpdated(() => {
       const profile = getUserProfile();
       const shouldShow = hasCompletedOnboarding() || !!profile;
       setShowCoachChat(shouldShow);
-    };
-
-    // Check periodically to catch localStorage updates (from onboarding completion)
-    const interval = setInterval(checkVisibility, 500);
-    
-    // Also listen for storage events (for cross-tab sync)
-    window.addEventListener('storage', checkVisibility);
-    
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', checkVisibility);
-    };
+    });
   }, []);
 
   // Initialize notifications on app load

@@ -1,4 +1,5 @@
 import { UserProfile, Meal, Workout, WeeklyPlan, FoodSuggestion, WorkoutType, CoachMemory, WeeklyReview, NutritionDay, ExerciseHistory } from './types';
+import { emitProfileUpdated } from './events';
 
 const STORAGE_KEYS = {
   USER_PROFILE: 'fittrack_user_profile',
@@ -35,6 +36,8 @@ export const getUserProfile = (): UserProfile | null => {
 
 export const saveUserProfile = (profile: UserProfile): void => {
   setItem(STORAGE_KEYS.USER_PROFILE, profile);
+  // Emit event so UI components can react immediately
+  emitProfileUpdated();
 };
 
 export const hasCompletedOnboarding = (): boolean => {
