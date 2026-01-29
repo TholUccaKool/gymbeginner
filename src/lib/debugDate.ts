@@ -1,3 +1,17 @@
+declare global {
+  interface Window {
+    __fittrack_debug?: {
+      enableDebugMode: () => void;
+      disableDebugMode: () => void;
+      setDateOffset: (days: number) => void;
+      getDateOffset: () => number;
+      getSimulatedDate: () => Date;
+      isActive: boolean;
+    };
+  }
+}
+
+
 // Debug Date Simulation - FOR TESTING ONLY
 // This module allows developers to simulate future days to test calorie adjustment logic
 
@@ -75,12 +89,12 @@ export const disableDebugMode = (): void => {
 
 // Expose to window for console access (development only)
 if (typeof window !== 'undefined') {
-  (window as any).__fittrack_debug = {
+  window.__fittrack_debug = {
     enableDebugMode,
     disableDebugMode,
     setDateOffset,
     getDateOffset,
     getSimulatedDate,
-    isActive: isDebugModeActive,
+    isActive: isDebugModeActive(),
   };
 }
