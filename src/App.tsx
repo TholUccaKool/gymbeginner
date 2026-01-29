@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -32,6 +32,32 @@ function RootRedirect() {
 }
 
 function AppContent() {
+  // Track whether to show coach chat - updates on navigation/profile changes
+  const [showCoachChat, setShowCoachChat] = useState(() => {
+    const profile = getUserProfile();
+    return hasCompletedOnboarding() || !!profile;
+  });
+
+  // Re-check visibility when route changes or on interval to catch profile updates
+  useEffect(() => {
+    const checkVisibility = () => {
+      const profile = getUserProfile();
+      const shouldShow = hasCompletedOnboarding() || !!profile;
+      setShowCoachChat(shouldShow);
+    };
+
+    // Check periodically to catch localStorage updates (from onboarding completion)
+    const interval = setInterval(checkVisibility, 500);
+    
+    // Also listen for storage events (for cross-tab sync)
+    window.addEventListener('storage', checkVisibility);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', checkVisibility);
+    };
+  }, []);
+
   // Initialize notifications on app load
   useEffect(() => {
     // Initialize native notifications if on Capacitor
@@ -51,10 +77,6 @@ function AppContent() {
       return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }
   }, []);
-
-  // Show coach chat if user has started onboarding (has profile) or completed it
-  const profile = getUserProfile();
-  const showCoachChat = hasCompletedOnboarding() || !!profile;
 
   return (
     <BrowserRouter>
