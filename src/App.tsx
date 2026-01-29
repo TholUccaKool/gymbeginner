@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { hasCompletedOnboarding, getUserProfile } from "@/lib/storage";
+import { onProfileUpdated } from "@/lib/events";
 import { checkAndScheduleNotifications } from "@/lib/notifications";
 import { initializeNativeNotifications, isNativePlatform } from "@/lib/nativeNotifications";
 import { CoachChat } from "@/components/CoachChat";
@@ -32,6 +33,21 @@ function RootRedirect() {
 }
 
 function AppContent() {
+  // Track whether to show coach chat - updates reactively via event system
+  const [showCoachChat, setShowCoachChat] = useState(() => {
+    const profile = getUserProfile();
+    return hasCompletedOnboarding() || !!profile;
+  });
+
+  // Listen for profile updates to show coach chat immediately after onboarding
+  useEffect(() => {
+    return onProfileUpdated(() => {
+      const profile = getUserProfile();
+      const shouldShow = hasCompletedOnboarding() || !!profile;
+      setShowCoachChat(shouldShow);
+    });
+  }, []);
+
   // Initialize notifications on app load
   useEffect(() => {
     // Initialize native notifications if on Capacitor
@@ -51,8 +67,6 @@ function AppContent() {
       return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }
   }, []);
-
-  const showCoachChat = hasCompletedOnboarding();
 
   return (
     <BrowserRouter>
