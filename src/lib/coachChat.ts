@@ -21,7 +21,7 @@ export interface ChatMessage {
 }
 
 export interface CoachAction {
-  type: "log_meal" | "skip_workout" | "move_workout" | "mark_rest_day" | "none";
+  type: "log_meal" | "skip_workout" | "move_workout" | "mark_rest_day" | "schedule_workout" | "none";
   data: Record<string, unknown>;
   confirmed?: boolean;
 }
@@ -168,6 +168,106 @@ export function applyCoachAction(action: CoachAction): { success: boolean; messa
           saveWorkout(workout);
         }
         return { success: true, message: "Day marked as rest day" };
+      }
+
+      case "schedule_workout": {
+        const scheduleData = action.data as { 
+          date: string; 
+          workoutType?: string; 
+          reason?: string 
+        };
+        
+        // Check if there's already a workout for this date
+        const existingWorkout = getWorkoutByDate(scheduleData.date);
+        
+        if (existingWorkout && existingWorkout.completed) {
+          // Already completed - just acknowledge
+          return { success: true, message: "Workout already recorded for this day" };
+        }
+        
+        // Import default exercises for the workout type
+        const workoutType = (scheduleData.workoutType || 'full-body') as 'push' | 'pull' | 'legs' | 'full-body' | 'upper' | 'lower';
+        
+        // Dynamic import to avoid circular dependency - use inline DEFAULT_EXERCISES reference
+        const DEFAULT_EXERCISES_MAP: Record<string, Array<{ id: string; name: string; muscleGroup: string }>> = {
+          push: [
+            { id: 'bench-press', name: 'Bench Press', muscleGroup: 'Chest' },
+            { id: 'overhead-press', name: 'Overhead Press', muscleGroup: 'Shoulders' },
+            { id: 'incline-db-press', name: 'Incline Dumbbell Press', muscleGroup: 'Upper Chest' },
+            { id: 'lateral-raise', name: 'Lateral Raise', muscleGroup: 'Shoulders' },
+            { id: 'tricep-pushdown', name: 'Tricep Pushdown', muscleGroup: 'Triceps' },
+          ],
+          pull: [
+            { id: 'deadlift', name: 'Deadlift', muscleGroup: 'Back' },
+            { id: 'barbell-row', name: 'Barbell Row', muscleGroup: 'Back' },
+            { id: 'pull-ups', name: 'Pull-ups', muscleGroup: 'Lats' },
+            { id: 'face-pulls', name: 'Face Pulls', muscleGroup: 'Rear Delts' },
+            { id: 'bicep-curl', name: 'Bicep Curl', muscleGroup: 'Biceps' },
+          ],
+          legs: [
+            { id: 'squat', name: 'Squat', muscleGroup: 'Quads' },
+            { id: 'leg-press', name: 'Leg Press', muscleGroup: 'Quads' },
+            { id: 'romanian-deadlift', name: 'Romanian Deadlift', muscleGroup: 'Hamstrings' },
+            { id: 'leg-curl', name: 'Leg Curl', muscleGroup: 'Hamstrings' },
+            { id: 'calf-raise', name: 'Calf Raise', muscleGroup: 'Calves' },
+          ],
+          'full-body': [
+            { id: 'squat', name: 'Squat', muscleGroup: 'Quads' },
+            { id: 'bench-press', name: 'Bench Press', muscleGroup: 'Chest' },
+            { id: 'barbell-row', name: 'Barbell Row', muscleGroup: 'Back' },
+            { id: 'overhead-press', name: 'Overhead Press', muscleGroup: 'Shoulders' },
+            { id: 'deadlift', name: 'Deadlift', muscleGroup: 'Back/Legs' },
+          ],
+          upper: [
+            { id: 'bench-press', name: 'Bench Press', muscleGroup: 'Chest' },
+            { id: 'barbell-row', name: 'Barbell Row', muscleGroup: 'Back' },
+            { id: 'overhead-press', name: 'Overhead Press', muscleGroup: 'Shoulders' },
+            { id: 'bicep-curl', name: 'Bicep Curl', muscleGroup: 'Biceps' },
+            { id: 'tricep-pushdown', name: 'Tricep Pushdown', muscleGroup: 'Triceps' },
+          ],
+          lower: [
+            { id: 'squat', name: 'Squat', muscleGroup: 'Quads' },
+            { id: 'leg-press', name: 'Leg Press', muscleGroup: 'Quads' },
+            { id: 'romanian-deadlift', name: 'Romanian Deadlift', muscleGroup: 'Hamstrings' },
+            { id: 'hip-thrust', name: 'Hip Thrust', muscleGroup: 'Glutes' },
+            { id: 'calf-raise', name: 'Calf Raise', muscleGroup: 'Calves' },
+          ],
+        };
+        
+        const exerciseTemplates = DEFAULT_EXERCISES_MAP[workoutType] || DEFAULT_EXERCISES_MAP['full-body'];
+        
+        const WORKOUT_NAMES: Record<string, string> = {
+          push: 'Push Day',
+          pull: 'Pull Day',
+          legs: 'Leg Day',
+          'full-body': 'Full Body',
+          upper: 'Upper Body',
+          lower: 'Lower Body',
+        };
+        
+        // Create exercises with default sets
+        const exercises = exerciseTemplates.map(ex => ({
+          id: generateId(),
+          exercise: ex,
+          sets: [
+            { id: generateId(), reps: 10, weight: 0, completed: false },
+            { id: generateId(), reps: 10, weight: 0, completed: false },
+            { id: generateId(), reps: 10, weight: 0, completed: false },
+          ],
+        }));
+        
+        const newWorkout: Workout = {
+          id: existingWorkout?.id || generateId(),
+          date: scheduleData.date,
+          type: workoutType,
+          name: WORKOUT_NAMES[workoutType] || 'Workout',
+          exercises,
+          completed: false,
+          notes: scheduleData.reason || 'Added via AI Coach',
+        };
+        
+        saveWorkout(newWorkout);
+        return { success: true, message: `${WORKOUT_NAMES[workoutType]} scheduled for today` };
       }
 
       case "none":
