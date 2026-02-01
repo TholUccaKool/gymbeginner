@@ -318,3 +318,45 @@
 *:focus-visible {
   @apply outline-none ring-2 ring-primary/50 ring-offset-2 ring-offset-background;
 }
+
+/* Exercise Animation Keyframes */
+@keyframes pushMotion {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+
+@keyframes pullMotion {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(-4px); }
+}
+
+@keyframes squatMotion {
+  0%, 100% { transform: translateY(0) scaleY(1); }
+  50% { transform: translateY(4px) scaleY(0.9); }
+}
+
+@keyframes liftMotion {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-4px) rotate(5deg); }
+}
+
+.animate-push-motion {
+  animation: pushMotion 1.5s ease-in-out infinite;
+}
+
+.animate-pull-motion {
+  animation: pullMotion 1.5s ease-in-out infinite;
+}
+
+.animate-squat-motion {
+  animation: squatMotion 1.8s ease-in-out infinite;
+}
+
+.animate-lift-motion {
+  animation: liftMotion 1.6s ease-in-out infinite;
+}
+
+/* Glow effect for primary button */
+.glow-primary {
+  box-shadow: 0 0 20px -5px hsl(var(--primary) / 0.4);
+}
