@@ -108,7 +108,7 @@ function ExerciseIcon({
       iconSize,
       "rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center overflow-hidden"
     )}>
-      <AnimatedFigure
+      <StaticFigure
         exerciseName={exerciseName}
         primaryMuscles={muscles.primary}
         size={size}
@@ -117,8 +117,8 @@ function ExerciseIcon({
   );
 }
 
-// Animated SVG figure for exercises - Canonical Stickman Rigs
-function AnimatedFigure({
+// Static SVG figure for exercises - Instructional Poses
+function StaticFigure({
   exerciseName,
   primaryMuscles,
   size
@@ -130,7 +130,7 @@ function AnimatedFigure({
   const scale = size === 'sm' ? 0.45 : 0.9;
   const figureSize = size === 'sm' ? 24 : 64;
 
-  // Determine exercise type for animation
+  // Determine exercise type for visualization
   const exerciseType = getExerciseType(exerciseName);
 
   const commonStrokeWidth = size === 'sm' ? 4 : 3;
@@ -144,87 +144,79 @@ function AnimatedFigure({
     >
       <g transform={`translate(32, 32) scale(${scale})`}>
 
-        {/* === 1. SQUAT RIG (Side View) === */}
+        {/* === 1. SQUAT POSE (Side View - Mid Rep) === */}
         {exerciseType === 'squat' && (
-          <g className="animate-squat">
+          <g>
             {/* Head */}
-            <circle cx="0" cy="-24" r="5" fill="currentColor" className="text-foreground/80" />
-            {/* Torso */}
-            <line x1="0" y1="-19" x2="0" y2="2" stroke="currentColor" strokeWidth={commonStrokeWidth} className="text-foreground/80" />
-            {/* Legs (simplified zigzag for standing -> squat) */}
-            <path d="M0,2 L-2,15 L-2,30" stroke="currentColor" strokeWidth={commonStrokeWidth} fill="none" className={primaryMuscles.includes('quadriceps') ? "text-primary" : "text-foreground/80"} />
-            <path d="M0,2 L2,15 L2,30" stroke="currentColor" strokeWidth={commonStrokeWidth} fill="none" className={primaryMuscles.includes('quadriceps') ? "text-primary" : "text-foreground/80"} />
+            <circle cx="0" cy="-22" r="5" fill="currentColor" className="text-foreground/80" />
+            {/* Torso (slight forward lean for balance) */}
+            <line x1="0" y1="-17" x2="2" y2="5" stroke="currentColor" strokeWidth={commonStrokeWidth} className="text-foreground/80" />
+            {/* Legs (Bent in squat) */}
+            <path d="M2,5 L12,5 L14,28" stroke="currentColor" strokeWidth={commonStrokeWidth} fill="none" className={primaryMuscles.includes('quadriceps') ? "text-primary" : "text-foreground/80"} />
+            <path d="M2,5 L-2,5 L0,28" stroke="currentColor" strokeWidth={commonStrokeWidth} fill="none" className={primaryMuscles.includes('quadriceps') ? "text-primary" : "text-foreground/80"} />
             {/* Arms (out for balance) */}
-            <path d="M0,-15 L10,-5" stroke="currentColor" strokeWidth={commonStrokeWidth} className="text-foreground/80" />
+            <path d="M0,-14 L12,-8" stroke="currentColor" strokeWidth={commonStrokeWidth} className="text-foreground/80" />
           </g>
         )}
 
-        {/* === 2. HINGE RIG (Side View) === */}
+        {/* === 2. HINGE POSE (Side View - Mid Hinge) === */}
         {exerciseType === 'hinge' && (
-          <g className="animate-hinge-hips">
-            {/* Torso Group that rotates */}
-            <g className="animate-hinge-torso">
-              <line x1="0" y1="0" x2="0" y2="-22" stroke="currentColor" strokeWidth={commonStrokeWidth} className="text-foreground/80" />
-              <circle cx="0" cy="-27" r="5" fill="currentColor" className="text-foreground/80" />
-              {/* Arms hanging */}
-              <line x1="0" y1="-18" x2="5" y2="5" stroke="currentColor" strokeWidth={commonStrokeWidth} className="text-foreground/80" />
-            </g>
-            {/* Legs (Fixed but hips move) */}
-            <path d="M0,0 L-3,28" stroke="currentColor" strokeWidth={commonStrokeWidth} className={primaryMuscles.includes('hamstrings') ? "text-primary" : "text-foreground/80"} />
-            <path d="M0,0 L3,28" stroke="currentColor" strokeWidth={commonStrokeWidth} className={primaryMuscles.includes('hamstrings') ? "text-primary" : "text-foreground/80"} />
+          <g>
+            {/* Torso (Leaned forward 45deg) */}
+            <line x1="-5" y1="0" x2="10" y2="-15" stroke="currentColor" strokeWidth={commonStrokeWidth} className="text-foreground/80" />
+            <circle cx="13" cy="-18" r="5" fill="currentColor" className="text-foreground/80" />
+            {/* Arms (Hanging down) */}
+            <line x1="8" y1="-12" x2="8" y2="10" stroke="currentColor" strokeWidth={commonStrokeWidth} className="text-foreground/80" />
+            {/* Legs (Soft knees, hips back) */}
+            <path d="M-5,0 L-5,28" stroke="currentColor" strokeWidth={commonStrokeWidth} className={primaryMuscles.includes('hamstrings') ? "text-primary" : "text-foreground/80"} />
+            <path d="M-5,0 L-2,28" stroke="currentColor" strokeWidth={commonStrokeWidth} className={primaryMuscles.includes('hamstrings') ? "text-primary" : "text-foreground/80"} />
           </g>
         )}
 
-        {/* === 3. PUSH RIG (Push-up Side View) === */}
+        {/* === 3. PUSH POSE (Push-up - Bottom Position) === */}
         {exerciseType === 'push' && (
-          <g transform="rotate(-90)" className="animate-push-body">
+          <g transform="rotate(-90)">
             {/* Horizontal Body Line */}
-            <line x1="0" y1="-15" x2="0" y2="15" stroke="currentColor" strokeWidth={commonStrokeWidth} className={primaryMuscles.includes('core') ? "text-primary" : "text-foreground/80"} />
+            <line x1="0" y1="-12" x2="0" y2="15" stroke="currentColor" strokeWidth={commonStrokeWidth} className={primaryMuscles.includes('core') ? "text-primary" : "text-foreground/80"} />
             {/* Head */}
-            <circle cx="0" cy="-20" r="5" fill="currentColor" className="text-foreground/80" />
+            <circle cx="0" cy="-17" r="5" fill="currentColor" className="text-foreground/80" />
             {/* Legs */}
             <line x1="0" y1="15" x2="0" y2="30" stroke="currentColor" strokeWidth={commonStrokeWidth} className="text-foreground/80" />
-            {/* Arms (Animated) */}
-            <g className="animate-push-arms">
-              <line x1="-3" y1="-10" x2="-12" y2="-10" stroke="currentColor" strokeWidth={commonStrokeWidth} className={primaryMuscles.includes('pectoralis') || primaryMuscles.includes('triceps') ? "text-primary" : "text-foreground/80"} />
-            </g>
+            {/* Arms (Bent elbows) */}
+            <polyline points="-3,-10 -12,-5 -3,0" stroke="currentColor" strokeWidth={commonStrokeWidth} fill="none" className={primaryMuscles.includes('pectoralis') || primaryMuscles.includes('triceps') ? "text-primary" : "text-foreground/80"} />
           </g>
         )}
 
-        {/* === 4. PULL RIG (Standing Row Side View) === */}
+        {/* === 4. PULL POSE (Standing Row - Contracted Phase) === */}
         {exerciseType === 'pull' && (
           <g>
-            {/* Torso (slight brace) */}
+            {/* Torso */}
             <line x1="0" y1="-5" x2="0" y2="25" stroke="currentColor" strokeWidth={commonStrokeWidth} className="text-foreground/80" />
             <circle cx="0" cy="-10" r="5" fill="currentColor" className="text-foreground/80" />
-            {/* Legs (braced) */}
-            <path d="M0,25 L-8,45" stroke="currentColor" strokeWidth={commonStrokeWidth} className="text-foreground/80" />
-            <path d="M0,25 L8,45" stroke="currentColor" strokeWidth={commonStrokeWidth} className="text-foreground/80" />
+            {/* Legs */}
+            <path d="M0,25 L-5,45" stroke="currentColor" strokeWidth={commonStrokeWidth} className="text-foreground/80" />
+            <path d="M0,25 L5,45" stroke="currentColor" strokeWidth={commonStrokeWidth} className="text-foreground/80" />
 
-            {/* Arms (Pulling Motion) */}
-            <g className="animate-pull-arms">
-              {/* Arm reaching forward then back */}
-              <path d="M0,0 L15,5" stroke="currentColor" strokeWidth={commonStrokeWidth} className={primaryMuscles.includes('lats') || primaryMuscles.includes('biceps') ? "text-primary" : "text-foreground/80"} />
-            </g>
+            {/* Arms (Elbows pulled back) */}
+            <polyline points="5,-2 15,5 5,12" stroke="currentColor" strokeWidth={commonStrokeWidth} fill="none" className={primaryMuscles.includes('lats') || primaryMuscles.includes('biceps') ? "text-primary" : "text-foreground/80"} />
           </g>
         )}
 
-        {/* === 5. LUNGE RIG (Split Stance Side View) === */}
+        {/* === 5. LUNGE POSE (Split Squat - Bottom) === */}
         {exerciseType === 'lunge' && (
-          <g className="animate-lunge">
+          <g>
             {/* Torso */}
-            <line x1="0" y1="-20" x2="0" y2="0" stroke="currentColor" strokeWidth={commonStrokeWidth} className="text-foreground/80" />
-            <circle cx="0" cy="-25" r="5" fill="currentColor" className="text-foreground/80" />
+            <line x1="0" y1="-15" x2="0" y2="5" stroke="currentColor" strokeWidth={commonStrokeWidth} className="text-foreground/80" />
+            <circle cx="0" cy="-20" r="5" fill="currentColor" className="text-foreground/80" />
 
-            {/* Legs (Split) */}
-            {/* Front Leg */}
-            <path d="M0,0 L10,10 L10,25" stroke="currentColor" strokeWidth={commonStrokeWidth} fill="none" className={primaryMuscles.includes('quadriceps') ? "text-primary" : "text-foreground/80"} />
-            {/* Back Leg */}
-            <path d="M0,0 L-10,15 L-15,30" stroke="currentColor" strokeWidth={commonStrokeWidth} fill="none" className={primaryMuscles.includes('glutes') ? "text-primary" : "text-foreground/80"} />
+            {/* Front Leg (90 deg) */}
+            <polyline points="0,5 10,5 10,25" stroke="currentColor" strokeWidth={commonStrokeWidth} fill="none" className={primaryMuscles.includes('quadriceps') ? "text-primary" : "text-foreground/80"} />
+            {/* Back Leg (Knee down) */}
+            <polyline points="0,5 -10,15 -10,25" stroke="currentColor" strokeWidth={commonStrokeWidth} fill="none" className={primaryMuscles.includes('glutes') ? "text-primary" : "text-foreground/80"} />
           </g>
         )}
 
-        {/* === STATIC FALLBACK === */}
+        {/* === STATIC FALLBACK (Neutral Stand) === */}
         {exerciseType === 'static' && (
           <g>
             <circle cx="0" cy="-20" r="5" fill="currentColor" className="text-foreground/50" />
