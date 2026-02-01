@@ -1,10 +1,13 @@
 import { useState, useMemo, useEffect } from "react";
-import { Check, Plus, Minus, Coffee, Dumbbell, Calendar, Play, Trophy, Search, X, Sparkles, GripVertical } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Check, Plus, Minus, Coffee, Dumbbell, Calendar, Play, Trophy, Search, X, Sparkles, GripVertical, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ExitWorkoutDialog } from "@/components/ExitWorkoutDialog";
+import { ExerciseAnimation } from "@/components/ExerciseAnimation";
 import {
   DndContext,
   closestCenter,
@@ -35,6 +38,7 @@ import {
   getSuggestedWeightForExercise,
   saveExerciseHistoryFromWorkout
 } from "@/lib/storage";
+import { getPersonalizedExercises } from "@/lib/workoutTemplates";
 import { onDataUpdated } from "@/lib/events";
 import { Workout, WorkoutType, WorkoutExercise, Exercise } from "@/lib/types";
 import { toast } from "sonner";
@@ -104,13 +108,16 @@ function SortableExerciseItem({ exercise, onRemove }: { exercise: Exercise; onRe
 }
 
 export default function WorkoutPage() {
+  const navigate = useNavigate();
   const [workout, setWorkout] = useState<Workout | null>(() => getWorkoutByDate(getTodayDate()));
   const [isActive, setIsActive] = useState(false);
   const [showCustomBuilder, setShowCustomBuilder] = useState(false);
+  const [showExitDialog, setShowExitDialog] = useState(false);
   const [selectedExercises, setSelectedExercises] = useState<Exercise[]>([]);
   const [exerciseSearch, setExerciseSearch] = useState("");
   const [editingSet, setEditingSet] = useState<{ exerciseId: string; setId: string; field: 'reps' | 'weight' } | null>(null);
   const [editValue, setEditValue] = useState("");
+  const [expandedExercise, setExpandedExercise] = useState<string | null>(null);
   
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -119,8 +126,36 @@ export default function WorkoutPage() {
   
   const profile = getUserProfile();
   const isCoachUser = profile?.experienceLevel === 'new' && profile?.coachProfile;
+  const experienceLevel = profile?.experienceLevel || 'new';
+  const trainingDays = profile?.trainingDays ?? profile?.coachProfile?.trainingDays ?? 3;
   const todayPlan = getTodayPlannedWorkout();
   const dayName = DAY_NAMES[new Date().getDay()];
+
+  // Check if workout has any progress
+  const hasProgress = useMemo(() => {
+    if (!workout) return false;
+    return workout.exercises.some(ex => ex.sets.some(s => s.completed));
+  }, [workout]);
+
+  // Handle back/exit
+  const handleBackClick = () => {
+    if (isActive && workout && !workout.completed) {
+      setShowExitDialog(true);
+    } else {
+      navigate(-1);
+    }
+  };
+
+  const handleConfirmExit = () => {
+    if (workout && hasProgress) {
+      // Save progress before exiting
+      saveWorkout(workout);
+      toast.success("Progress saved");
+    }
+    setIsActive(false);
+    setShowExitDialog(false);
+    navigate('/today');
+  };
 
   // Listen for data updates from external sources (e.g., AI Coach)
   useEffect(() => {
@@ -158,13 +193,9 @@ export default function WorkoutPage() {
   }, [exerciseSearch]);
 
   const getExercisesForType = (type: WorkoutType) => {
-    if (type === 'upper') {
-      return [...(DEFAULT_EXERCISES.push || []), ...(DEFAULT_EXERCISES.pull || []).slice(0, 2)];
-    }
-    if (type === 'lower') {
-      return DEFAULT_EXERCISES.legs || [];
-    }
-    return DEFAULT_EXERCISES[type as keyof typeof DEFAULT_EXERCISES] || [];
+    // Use personalized templates
+    const template = getPersonalizedExercises(type, experienceLevel, trainingDays);
+    return template.exercises;
   };
 
   const handleWorkoutTypeClick = (type: WorkoutType) => {
@@ -618,13 +649,34 @@ export default function WorkoutPage() {
    return (
     <div className="min-h-screen bg-background pb-32 gradient-mesh">
       <div className="max-w-lg mx-auto px-4">
-        <PageHeader title={workout?.name ?? "Workout"} subtitle={`${completedSets}/${totalSets} sets completed`} />
-        <div className="space-y-4 mt-4 pb-24">
+        {/* Header with back button */}
+        <div className="flex items-center gap-3 py-6">
+          <button
+            onClick={handleBackClick}
+            className="w-10 h-10 rounded-xl bg-secondary/80 hover:bg-secondary flex items-center justify-center transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+          <div className="flex-1">
+            <h1 className="text-xl font-display font-bold tracking-tight">{workout?.name ?? "Workout"}</h1>
+            <p className="text-sm text-muted-foreground">{completedSets}/{totalSets} sets completed</p>
+          </div>
+        </div>
+        
+        <div className="space-y-4 pb-24">
           {workout?.exercises.map((ex, exIndex) => (
             <div key={ex.id} className="bg-card rounded-2xl border border-border/60 overflow-hidden shadow-sm animate-slide-up" style={{ animationDelay: `${exIndex * 50}ms` }}>
               <div className="p-4 border-b border-border/60">
                 <h3 className="font-semibold">{ex.exercise.name}</h3>
                 <p className="text-xs text-muted-foreground">{ex.exercise.muscleGroup}</p>
+                
+                {/* Exercise Animation - Garmin style */}
+                <ExerciseAnimation
+                  exerciseName={ex.exercise.name}
+                  muscleGroup={ex.exercise.muscleGroup}
+                  isExpanded={expandedExercise === ex.id}
+                  onToggle={() => setExpandedExercise(expandedExercise === ex.id ? null : ex.id)}
+                />
               </div>
               <div className="divide-y divide-border/60">
                 {ex.sets.map((set, setIndex) => (
@@ -703,6 +755,14 @@ export default function WorkoutPage() {
         </div>
       </div>
       <BottomNav />
+      
+      {/* Exit confirmation dialog */}
+      <ExitWorkoutDialog
+        open={showExitDialog}
+        onOpenChange={setShowExitDialog}
+        onConfirmExit={handleConfirmExit}
+        hasProgress={hasProgress}
+      />
     </div>
   );
 }

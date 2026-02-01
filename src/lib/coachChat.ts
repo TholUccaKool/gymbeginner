@@ -9,7 +9,9 @@ import {
   saveWorkout,
   generateId
 } from "./storage";
+import { getPersonalizedExercises } from "./workoutTemplates";
 import { Meal, Workout } from "./types";
+import { emitDataUpdated } from "./events";
 
 export interface ChatMessage {
   id: string;
@@ -21,7 +23,7 @@ export interface ChatMessage {
 }
 
 export interface CoachAction {
-  type: "log_meal" | "skip_workout" | "move_workout" | "mark_rest_day" | "none";
+  type: "log_meal" | "skip_workout" | "move_workout" | "mark_rest_day" | "schedule_workout" | "none";
   data: Record<string, unknown>;
   confirmed?: boolean;
 }
@@ -168,6 +170,69 @@ export function applyCoachAction(action: CoachAction): { success: boolean; messa
           saveWorkout(workout);
         }
         return { success: true, message: "Day marked as rest day" };
+      }
+
+      case "schedule_workout": {
+        const scheduleData = action.data as { 
+          date: string; 
+          workoutType?: string; 
+          reason?: string 
+        };
+        
+        // Check if there's already a workout for this date
+        const existingWorkout = getWorkoutByDate(scheduleData.date);
+        
+        if (existingWorkout && existingWorkout.completed) {
+          // Already completed - just acknowledge
+          return { success: true, message: "Workout already recorded for this day" };
+        }
+        
+        // Get user profile for personalization
+        const profile = getUserProfile();
+        const experienceLevel = profile?.experienceLevel || 'new';
+        const trainingDays = profile?.trainingDays ?? profile?.coachProfile?.trainingDays ?? 3;
+        
+        // Use personalized template
+        const workoutType = (scheduleData.workoutType || 'full-body') as 'push' | 'pull' | 'legs' | 'full-body' | 'upper' | 'lower';
+        const template = getPersonalizedExercises(workoutType, experienceLevel, trainingDays);
+        
+        const WORKOUT_NAMES: Record<string, string> = {
+          push: 'Push Day',
+          pull: 'Pull Day',
+          legs: 'Leg Day',
+          'full-body': 'Full Body',
+          upper: 'Upper Body',
+          lower: 'Lower Body',
+        };
+        
+        // Create exercises with personalized sets
+        const exercises = template.exercises.map(ex => ({
+          id: generateId(),
+          exercise: ex,
+          sets: Array.from({ length: template.setsPerExercise }, () => ({
+            id: generateId(),
+            reps: template.repsPerSet,
+            weight: 0,
+            completed: false,
+          })),
+        }));
+        
+        const newWorkout: Workout = {
+          id: existingWorkout?.id || generateId(),
+          date: scheduleData.date,
+          type: workoutType,
+          name: WORKOUT_NAMES[workoutType] || 'Workout',
+          exercises,
+          completed: false,
+          notes: scheduleData.reason || 'Added via AI Coach',
+        };
+        
+        saveWorkout(newWorkout);
+        
+        // Emit data update so UI refreshes
+        emitDataUpdated();
+        
+        return { success: true, message: `${WORKOUT_NAMES[workoutType]} scheduled for today` };
       }
 
       case "none":
