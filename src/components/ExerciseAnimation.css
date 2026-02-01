@@ -1,91 +1,136 @@
-/* Exercise Animation Keyframes */
+/* Canonical Stickman Animations - Strict 3s Loops */
 
-/* Squat Motion */
-@keyframes squat-legs {
-  0%, 100% {
+/* 1. SQUAT (Side View) */
+/* Hips drop vertically, knees bend, torso stays upright */
+@keyframes squat-motion {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
-    transform: translateY(10px) scaleY(0.7);
+    transform: translateY(15px);
+    /* Deep squat depth */
   }
 }
 
-@keyframes squat-body {
-  0%, 100% {
-    transform: translateY(0);
+/* 2. HINGE (Side View) */
+/* Hips move back, torso leans forward, knees soft */
+@keyframes hinge-torso {
+
+  0%,
+  100% {
+    transform: rotate(0deg);
   }
+
   50% {
-    transform: translateY(12px);
+    transform: rotate(45deg);
+    /* Significant lean */
   }
 }
 
-/* Push Motion (Overhead Press / Bench Press mimic) */
+@keyframes hinge-hips {
+
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  50% {
+    transform: translate(-5px, 2px);
+    /* Hips back and slightly down */
+  }
+}
+
+/* 3. PUSH (Push-up Style) */
+/* Body moves up and down (arms extend away) */
+@keyframes push-body {
+
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(12px) rotate(0deg);
+    /* Lowers to floor */
+  }
+}
+
 @keyframes push-arms {
-  0%, 100% {
-    transform: translateY(0) scaleY(1);
+
+  0%,
+  100% {
+    transform: scaleY(1);
   }
+
   50% {
-    transform: translateY(-8px) scaleY(1.2);
+    transform: scaleY(0.5);
+    /* Arms bend */
   }
 }
 
-@keyframes push-bar {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-12px);
-  }
-}
-
-/* Pull Motion (Lat Pulldown / Row mimic) */
+/* 4. PULL (Standing Row Style) */
+/* Arms reach forward then pull elbows back */
 @keyframes pull-arms {
-  0%, 100% {
-    transform: translateY(0) scaleY(1);
+
+  0%,
+  100% {
+    transform: translateX(0);
   }
+
   50% {
-    transform: translateY(8px) scaleY(0.8);
+    transform: translateX(10px);
+    /* Elbows pull back */
   }
 }
 
-@keyframes pull-bar {
-  0%, 100% {
+/* 5. LUNGE (Split Squat Style) */
+/* Back knee drops vertically */
+@keyframes lunge-motion {
+
+  0%,
+  100% {
     transform: translateY(0);
   }
+
   50% {
-    transform: translateY(12px);
+    transform: translateY(10px);
+    /* Knee drops */
   }
 }
 
-/* Base Classes */
-.exercise-animation-group {
-    transform-origin: center;
+/* Helper Classes */
+.animate-squat {
+  animation: squat-motion 3s ease-in-out infinite;
+  transform-origin: bottom center;
 }
 
-/* Animation Classes */
-.animate-squat-legs {
-    animation: squat-legs 2s ease-in-out infinite;
-    transform-origin: bottom center;
+.animate-hinge-torso {
+  animation: hinge-torso 3s ease-in-out infinite;
+  transform-origin: 50% 65%;
+  /* Pivot at hips */
 }
 
-.animate-squat-body {
-    animation: squat-body 2s ease-in-out infinite;
+.animate-hinge-hips {
+  animation: hinge-hips 3s ease-in-out infinite;
+}
+
+.animate-push-body {
+  animation: push-body 3s ease-in-out infinite;
 }
 
 .animate-push-arms {
-    animation: push-arms 2s ease-in-out infinite;
-    transform-origin: shoulder; /* Conceptual, handled in SVG transform */
-}
-
-.animate-push-bar {
-    animation: push-bar 2s ease-in-out infinite;
+  animation: push-arms 3s ease-in-out infinite;
+  transform-origin: top center;
 }
 
 .animate-pull-arms {
-    animation: pull-arms 2s ease-in-out infinite;
-    transform-origin: top center;
+  animation: pull-arms 3s ease-in-out infinite;
 }
 
-.animate-pull-bar {
-    animation: pull-bar 2s ease-in-out infinite;
+.animate-lunge {
+  animation: lunge-motion 3s ease-in-out infinite;
+  transform-origin: bottom center;
 }
