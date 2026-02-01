@@ -9,7 +9,9 @@ import {
   saveWorkout,
   generateId
 } from "./storage";
+import { getPersonalizedExercises } from "./workoutTemplates";
 import { Meal, Workout } from "./types";
+import { emitDataUpdated } from "./events";
 
 export interface ChatMessage {
   id: string;
@@ -185,56 +187,14 @@ export function applyCoachAction(action: CoachAction): { success: boolean; messa
           return { success: true, message: "Workout already recorded for this day" };
         }
         
-        // Import default exercises for the workout type
+        // Get user profile for personalization
+        const profile = getUserProfile();
+        const experienceLevel = profile?.experienceLevel || 'new';
+        const trainingDays = profile?.trainingDays ?? profile?.coachProfile?.trainingDays ?? 3;
+        
+        // Use personalized template
         const workoutType = (scheduleData.workoutType || 'full-body') as 'push' | 'pull' | 'legs' | 'full-body' | 'upper' | 'lower';
-        
-        // Dynamic import to avoid circular dependency - use inline DEFAULT_EXERCISES reference
-        const DEFAULT_EXERCISES_MAP: Record<string, Array<{ id: string; name: string; muscleGroup: string }>> = {
-          push: [
-            { id: 'bench-press', name: 'Bench Press', muscleGroup: 'Chest' },
-            { id: 'overhead-press', name: 'Overhead Press', muscleGroup: 'Shoulders' },
-            { id: 'incline-db-press', name: 'Incline Dumbbell Press', muscleGroup: 'Upper Chest' },
-            { id: 'lateral-raise', name: 'Lateral Raise', muscleGroup: 'Shoulders' },
-            { id: 'tricep-pushdown', name: 'Tricep Pushdown', muscleGroup: 'Triceps' },
-          ],
-          pull: [
-            { id: 'deadlift', name: 'Deadlift', muscleGroup: 'Back' },
-            { id: 'barbell-row', name: 'Barbell Row', muscleGroup: 'Back' },
-            { id: 'pull-ups', name: 'Pull-ups', muscleGroup: 'Lats' },
-            { id: 'face-pulls', name: 'Face Pulls', muscleGroup: 'Rear Delts' },
-            { id: 'bicep-curl', name: 'Bicep Curl', muscleGroup: 'Biceps' },
-          ],
-          legs: [
-            { id: 'squat', name: 'Squat', muscleGroup: 'Quads' },
-            { id: 'leg-press', name: 'Leg Press', muscleGroup: 'Quads' },
-            { id: 'romanian-deadlift', name: 'Romanian Deadlift', muscleGroup: 'Hamstrings' },
-            { id: 'leg-curl', name: 'Leg Curl', muscleGroup: 'Hamstrings' },
-            { id: 'calf-raise', name: 'Calf Raise', muscleGroup: 'Calves' },
-          ],
-          'full-body': [
-            { id: 'squat', name: 'Squat', muscleGroup: 'Quads' },
-            { id: 'bench-press', name: 'Bench Press', muscleGroup: 'Chest' },
-            { id: 'barbell-row', name: 'Barbell Row', muscleGroup: 'Back' },
-            { id: 'overhead-press', name: 'Overhead Press', muscleGroup: 'Shoulders' },
-            { id: 'deadlift', name: 'Deadlift', muscleGroup: 'Back/Legs' },
-          ],
-          upper: [
-            { id: 'bench-press', name: 'Bench Press', muscleGroup: 'Chest' },
-            { id: 'barbell-row', name: 'Barbell Row', muscleGroup: 'Back' },
-            { id: 'overhead-press', name: 'Overhead Press', muscleGroup: 'Shoulders' },
-            { id: 'bicep-curl', name: 'Bicep Curl', muscleGroup: 'Biceps' },
-            { id: 'tricep-pushdown', name: 'Tricep Pushdown', muscleGroup: 'Triceps' },
-          ],
-          lower: [
-            { id: 'squat', name: 'Squat', muscleGroup: 'Quads' },
-            { id: 'leg-press', name: 'Leg Press', muscleGroup: 'Quads' },
-            { id: 'romanian-deadlift', name: 'Romanian Deadlift', muscleGroup: 'Hamstrings' },
-            { id: 'hip-thrust', name: 'Hip Thrust', muscleGroup: 'Glutes' },
-            { id: 'calf-raise', name: 'Calf Raise', muscleGroup: 'Calves' },
-          ],
-        };
-        
-        const exerciseTemplates = DEFAULT_EXERCISES_MAP[workoutType] || DEFAULT_EXERCISES_MAP['full-body'];
+        const template = getPersonalizedExercises(workoutType, experienceLevel, trainingDays);
         
         const WORKOUT_NAMES: Record<string, string> = {
           push: 'Push Day',
@@ -245,15 +205,16 @@ export function applyCoachAction(action: CoachAction): { success: boolean; messa
           lower: 'Lower Body',
         };
         
-        // Create exercises with default sets
-        const exercises = exerciseTemplates.map(ex => ({
+        // Create exercises with personalized sets
+        const exercises = template.exercises.map(ex => ({
           id: generateId(),
           exercise: ex,
-          sets: [
-            { id: generateId(), reps: 10, weight: 0, completed: false },
-            { id: generateId(), reps: 10, weight: 0, completed: false },
-            { id: generateId(), reps: 10, weight: 0, completed: false },
-          ],
+          sets: Array.from({ length: template.setsPerExercise }, () => ({
+            id: generateId(),
+            reps: template.repsPerSet,
+            weight: 0,
+            completed: false,
+          })),
         }));
         
         const newWorkout: Workout = {
@@ -267,6 +228,10 @@ export function applyCoachAction(action: CoachAction): { success: boolean; messa
         };
         
         saveWorkout(newWorkout);
+        
+        // Emit data update so UI refreshes
+        emitDataUpdated();
+        
         return { success: true, message: `${WORKOUT_NAMES[workoutType]} scheduled for today` };
       }
 
