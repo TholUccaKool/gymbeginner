@@ -23,30 +23,31 @@ const BEGINNER_TEMPLATES: Record<string, Exercise[]> = {
     { id: 'dumbbell-curl', name: 'Dumbbell Curl', muscleGroup: 'Biceps' },
   ],
   legs: [
-    // Legs: Quad-focused with hamstring/calf work
-    { id: 'squat', name: 'Back Squat', muscleGroup: 'Quads' },
+    // Legs: Quad-focused (machine/squat based)
+    { id: 'squat', name: 'Goblet Squat', muscleGroup: 'Quads' },
     { id: 'leg-press', name: 'Leg Press', muscleGroup: 'Quads' },
     { id: 'leg-curl', name: 'Leg Curl', muscleGroup: 'Hamstrings' },
     { id: 'calf-raise', name: 'Calf Raise', muscleGroup: 'Calves' },
   ],
   lower: [
-    // Lower Body: Hip-hinge focused, posterior chain emphasis
-    { id: 'romanian-deadlift', name: 'Romanian Deadlift', muscleGroup: 'Hamstrings' },
-    { id: 'goblet-squat', name: 'Goblet Squat', muscleGroup: 'Quads' },
-    { id: 'hip-thrust', name: 'Hip Thrust', muscleGroup: 'Glutes' },
+    // Lower Body: Posterior chain focused (hinge based)
+    { id: 'romanian-deadlift', name: 'Romanian Deadlift (DB)', muscleGroup: 'Hamstrings' },
     { id: 'walking-lunges', name: 'Walking Lunges', muscleGroup: 'Quads/Glutes' },
+    { id: 'glute-bridge', name: 'Glute Bridge', muscleGroup: 'Glutes' },
+    { id: 'leg-curl', name: 'Seated Leg Curl', muscleGroup: 'Hamstrings' },
   ],
   upper: [
     { id: 'bench-press', name: 'Bench Press', muscleGroup: 'Chest' },
-    { id: 'barbell-row', name: 'Barbell Row', muscleGroup: 'Back' },
-    { id: 'overhead-press', name: 'Overhead Press', muscleGroup: 'Shoulders' },
     { id: 'lat-pulldown', name: 'Lat Pulldown', muscleGroup: 'Back' },
+    { id: 'overhead-press', name: 'Overhead Press', muscleGroup: 'Shoulders' },
+    { id: 'dumbbell-row', name: 'Dumbbell Row', muscleGroup: 'Back' },
   ],
   'full-body': [
-    { id: 'squat', name: 'Back Squat', muscleGroup: 'Quads' },
-    { id: 'bench-press', name: 'Bench Press', muscleGroup: 'Chest' },
-    { id: 'barbell-row', name: 'Barbell Row', muscleGroup: 'Back' },
-    { id: 'overhead-press', name: 'Overhead Press', muscleGroup: 'Shoulders' },
+    { id: 'squat', name: 'Goblet Squat', muscleGroup: 'Quads' },
+    { id: 'push-up', name: 'Push-ups', muscleGroup: 'Chest' },
+    { id: 'dumbbell-row', name: 'Dumbbell Row', muscleGroup: 'Back' },
+    { id: 'overhead-press', name: 'Overhead Press (DB)', muscleGroup: 'Shoulders' },
+    { id: 'plank', name: 'Plank', muscleGroup: 'Core' },
   ],
 };
 
@@ -111,21 +112,21 @@ export function getPersonalizedExercises(
 ): WorkoutTemplate {
   const templates = experienceLevel === 'experienced' ? EXPERIENCED_TEMPLATES : BEGINNER_TEMPLATES;
   const exercises = templates[workoutType as string] || templates['full-body'];
-  
+
   // Adjust sets and reps based on training frequency
   let setsPerExercise = 3;
   let repsPerSet = 10;
-  
+
   if (experienceLevel === 'experienced') {
     setsPerExercise = 4;
     repsPerSet = 8;
   }
-  
+
   // Higher frequency = lower volume per session
   if (trainingDaysPerWeek >= 5) {
     setsPerExercise = Math.max(2, setsPerExercise - 1);
   }
-  
+
   return {
     exercises,
     setsPerExercise,

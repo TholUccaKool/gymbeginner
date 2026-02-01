@@ -1,8 +1,8 @@
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  getUserProfile, 
-  getMealsByDate, 
-  getDailyNutritionTotals, 
+import {
+  getUserProfile,
+  getMealsByDate,
+  getDailyNutritionTotals,
   getTodayDate,
   getWorkoutByDate,
   saveMeal,
@@ -52,10 +52,10 @@ function buildUserContext(): UserContext {
   const meals = getMealsByDate(todayDate);
   const totals = getDailyNutritionTotals(todayDate);
   const workout = getWorkoutByDate(todayDate);
-  
+
   const workoutDays = profile?.workoutDays ?? profile?.coachProfile?.workoutDays ?? [];
   const trainingDays = profile?.trainingDays ?? profile?.coachProfile?.trainingDays ?? 3;
-  
+
   return {
     nutritionTargets: profile?.nutritionTargets ?? { calories: 2000, protein: 150 },
     todayMeals: meals.map(m => ({ name: m.name, calories: m.calories, protein: m.protein })),
@@ -73,7 +73,7 @@ export async function sendMessageToCoach(
   messages: ChatMessage[]
 ): Promise<CoachResponse> {
   const userContext = buildUserContext();
-  
+
   // Convert to API format (only role and content)
   const apiMessages = messages.map(m => ({
     role: m.role as "user" | "assistant",
@@ -141,7 +141,7 @@ export function applyCoachAction(action: CoachAction): { success: boolean; messa
         const moveData = action.data as { fromDate: string; toDate: string };
         const fromWorkout = getWorkoutByDate(moveData.fromDate);
         const toWorkout = getWorkoutByDate(moveData.toDate);
-        
+
         if (fromWorkout && !fromWorkout.completed) {
           // Create new workout on target date
           const newWorkout: Workout = {
@@ -150,12 +150,12 @@ export function applyCoachAction(action: CoachAction): { success: boolean; messa
             date: moveData.toDate,
           };
           saveWorkout(newWorkout);
-          
+
           // Mark original as rest day
           fromWorkout.type = 'rest';
           fromWorkout.name = 'Rest Day (Moved)';
           saveWorkout(fromWorkout);
-          
+
           return { success: true, message: `Workout moved to ${moveData.toDate}` };
         }
         return { success: false, message: "Could not move workout" };
@@ -173,29 +173,29 @@ export function applyCoachAction(action: CoachAction): { success: boolean; messa
       }
 
       case "schedule_workout": {
-        const scheduleData = action.data as { 
-          date: string; 
-          workoutType?: string; 
-          reason?: string 
+        const scheduleData = action.data as {
+          date: string;
+          workoutType?: string;
+          reason?: string
         };
-        
+
         // Check if there's already a workout for this date
         const existingWorkout = getWorkoutByDate(scheduleData.date);
-        
+
         if (existingWorkout && existingWorkout.completed) {
           // Already completed - just acknowledge
           return { success: true, message: "Workout already recorded for this day" };
         }
-        
+
         // Get user profile for personalization
         const profile = getUserProfile();
         const experienceLevel = profile?.experienceLevel || 'new';
         const trainingDays = profile?.trainingDays ?? profile?.coachProfile?.trainingDays ?? 3;
-        
+
         // Use personalized template
         const workoutType = (scheduleData.workoutType || 'full-body') as 'push' | 'pull' | 'legs' | 'full-body' | 'upper' | 'lower';
         const template = getPersonalizedExercises(workoutType, experienceLevel, trainingDays);
-        
+
         const WORKOUT_NAMES: Record<string, string> = {
           push: 'Push Day',
           pull: 'Pull Day',
@@ -204,7 +204,7 @@ export function applyCoachAction(action: CoachAction): { success: boolean; messa
           upper: 'Upper Body',
           lower: 'Lower Body',
         };
-        
+
         // Create exercises with personalized sets
         const exercises = template.exercises.map(ex => ({
           id: generateId(),
@@ -216,7 +216,10 @@ export function applyCoachAction(action: CoachAction): { success: boolean; messa
             completed: false,
           })),
         }));
-        
+
+        const isRestDayOverwrite = existingWorkout && existingWorkout.type === 'rest';
+        const defaultReason = isRestDayOverwrite ? 'Schedule adjusted by Coach' : 'Added via AI Coach';
+
         const newWorkout: Workout = {
           id: existingWorkout?.id || generateId(),
           date: scheduleData.date,
@@ -224,14 +227,14 @@ export function applyCoachAction(action: CoachAction): { success: boolean; messa
           name: WORKOUT_NAMES[workoutType] || 'Workout',
           exercises,
           completed: false,
-          notes: scheduleData.reason || 'Added via AI Coach',
+          notes: scheduleData.reason || defaultReason,
         };
-        
+
         saveWorkout(newWorkout);
-        
+
         // Emit data update so UI refreshes
         emitDataUpdated();
-        
+
         return { success: true, message: `${WORKOUT_NAMES[workoutType]} scheduled for today` };
       }
 

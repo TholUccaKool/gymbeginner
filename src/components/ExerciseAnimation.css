@@ -1,0 +1,91 @@
+/* Exercise Animation Keyframes */
+
+/* Squat Motion */
+@keyframes squat-legs {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px) scaleY(0.7);
+  }
+}
+
+@keyframes squat-body {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(12px);
+  }
+}
+
+/* Push Motion (Overhead Press / Bench Press mimic) */
+@keyframes push-arms {
+  0%, 100% {
+    transform: translateY(0) scaleY(1);
+  }
+  50% {
+    transform: translateY(-8px) scaleY(1.2);
+  }
+}
+
+@keyframes push-bar {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+/* Pull Motion (Lat Pulldown / Row mimic) */
+@keyframes pull-arms {
+  0%, 100% {
+    transform: translateY(0) scaleY(1);
+  }
+  50% {
+    transform: translateY(8px) scaleY(0.8);
+  }
+}
+
+@keyframes pull-bar {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(12px);
+  }
+}
+
+/* Base Classes */
+.exercise-animation-group {
+    transform-origin: center;
+}
+
+/* Animation Classes */
+.animate-squat-legs {
+    animation: squat-legs 2s ease-in-out infinite;
+    transform-origin: bottom center;
+}
+
+.animate-squat-body {
+    animation: squat-body 2s ease-in-out infinite;
+}
+
+.animate-push-arms {
+    animation: push-arms 2s ease-in-out infinite;
+    transform-origin: shoulder; /* Conceptual, handled in SVG transform */
+}
+
+.animate-push-bar {
+    animation: push-bar 2s ease-in-out infinite;
+}
+
+.animate-pull-arms {
+    animation: pull-arms 2s ease-in-out infinite;
+    transform-origin: top center;
+}
+
+.animate-pull-bar {
+    animation: pull-bar 2s ease-in-out infinite;
+}

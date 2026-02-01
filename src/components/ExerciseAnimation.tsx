@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import "./ExerciseAnimation.css";
 
 // Muscle group definitions for highlighting
 const MUSCLE_GROUPS: Record<string, { primary: string[]; secondary: string[] }> = {
@@ -99,7 +100,7 @@ function ExerciseIcon({
   muscleGroup: string; 
   size: 'sm' | 'lg' 
 }) {
-  const iconSize = size === 'sm' ? 'w-10 h-10' : 'w-20 h-20';
+  const iconSize = size === 'sm' ? 'w-10 h-10' : 'w-24 h-24';
   const muscles = getMuscleGroups(muscleGroup);
   
   return (
@@ -127,7 +128,7 @@ function AnimatedFigure({
   size: 'sm' | 'lg';
 }) {
   const scale = size === 'sm' ? 0.4 : 0.8;
-  const figureSize = size === 'sm' ? 24 : 48;
+  const figureSize = size === 'sm' ? 24 : 64;
   
   // Determine exercise type for animation
   const exerciseType = getExerciseType(exerciseName);
@@ -137,82 +138,91 @@ function AnimatedFigure({
       width={figureSize} 
       height={figureSize} 
       viewBox="0 0 64 64" 
-      className="exercise-animation"
+      className="exercise-animation overflow-visible"
     >
-      <g transform={`translate(32, 32) scale(${scale})`}>
-        {/* Simplified stick figure with muscle highlights */}
-        
-        {/* Head */}
-        <circle cx="0" cy="-24" r="6" fill="currentColor" className="text-foreground/70" />
-        
-        {/* Body */}
-        <line x1="0" y1="-18" x2="0" y2="8" stroke="currentColor" strokeWidth="3" className="text-foreground/70" />
-        
-        {/* Arms - animated based on exercise type */}
-        <g className={cn(
-          "origin-center",
-          exerciseType === 'push' && "animate-push-motion",
-          exerciseType === 'pull' && "animate-pull-motion",
-          exerciseType === 'lift' && "animate-lift-motion"
-        )}>
-          {/* Left arm */}
-          <line x1="-16" y1="-10" x2="0" y2="-14" stroke="currentColor" strokeWidth="3" 
-            className={cn(
-              primaryMuscles.includes('biceps') || primaryMuscles.includes('triceps') 
-                ? "text-primary" 
-                : "text-foreground/70"
-            )} 
-          />
-          {/* Right arm */}
-          <line x1="16" y1="-10" x2="0" y2="-14" stroke="currentColor" strokeWidth="3"
-            className={cn(
-              primaryMuscles.includes('biceps') || primaryMuscles.includes('triceps') 
-                ? "text-primary" 
-                : "text-foreground/70"
-            )}
-          />
-        </g>
-        
-        {/* Legs - animated for leg exercises */}
-        <g className={cn(
-          "origin-center",
-          exerciseType === 'squat' && "animate-squat-motion"
-        )}>
-          {/* Left leg */}
-          <line x1="-8" y1="24" x2="0" y2="8" stroke="currentColor" strokeWidth="3"
-            className={cn(
-              primaryMuscles.includes('quadriceps') || primaryMuscles.includes('hamstrings') || primaryMuscles.includes('glutes')
-                ? "text-primary" 
-                : "text-foreground/70"
-            )}
-          />
-          {/* Right leg */}
-          <line x1="8" y1="24" x2="0" y2="8" stroke="currentColor" strokeWidth="3"
-            className={cn(
-              primaryMuscles.includes('quadriceps') || primaryMuscles.includes('hamstrings') || primaryMuscles.includes('glutes')
-                ? "text-primary" 
-                : "text-foreground/70"
-            )}
-          />
-        </g>
-        
-        {/* Chest highlight */}
-        {primaryMuscles.includes('pectoralis') && (
-          <ellipse cx="0" cy="-8" rx="8" ry="5" fill="currentColor" className="text-primary/40" />
+      <g transform={`translate(${32}, ${32}) scale(${scale})`}>
+        {/* Squat Animation Structure */}
+        {exerciseType === 'squat' && (
+          <g className="animate-squat-body">
+             {/* Torso */}
+             <line x1="0" y1="-15" x2="0" y2="10" stroke="currentColor" strokeWidth="4" className="text-foreground/80" />
+             {/* Head */}
+             <circle cx="0" cy="-22" r="6" fill="currentColor" className="text-foreground/80" />
+             {/* Thighs */}
+             <g className="animate-squat-legs">
+                <path d="M0,10 L-10,30" stroke="currentColor" strokeWidth="4" className={primaryMuscles.includes('quadriceps') ? "text-primary" : "text-foreground/80"} />
+                <path d="M0,10 L10,30" stroke="currentColor" strokeWidth="4" className={primaryMuscles.includes('quadriceps') ? "text-primary" : "text-foreground/80"} />
+                {/* Calves */}
+                <path d="M-10,30 L-12,50" stroke="currentColor" strokeWidth="3" className="text-foreground/80" />
+                <path d="M10,30 L12,50" stroke="currentColor" strokeWidth="3" className="text-foreground/80" />
+             </g>
+             {/* Arms (holding weight?) */}
+             <path d="M-8,-12 L-15,5" stroke="currentColor" strokeWidth="3" className="text-foreground/80" />
+             <path d="M8,-12 L15,5" stroke="currentColor" strokeWidth="3" className="text-foreground/80" />
+          </g>
         )}
-        
-        {/* Back highlight */}
-        {(primaryMuscles.includes('lats') || primaryMuscles.includes('rhomboids')) && (
-          <ellipse cx="0" cy="-4" rx="10" ry="8" fill="currentColor" className="text-primary/30" />
+
+        {/* Push Animation Structure */}
+        {exerciseType === 'push' && (
+           <g>
+              {/* Bench/Back */}
+              {/* <rect x="-15" y="-10" width="30" height="40" rx="2" fill="currentColor" className="text-muted/30" /> */}
+              
+              {/* Body */}
+              <line x1="0" y1="-10" x2="0" y2="20" stroke="currentColor" strokeWidth="10" strokeLinecap="round" className="text-foreground/30" />
+              <circle cx="0" cy="-18" r="7" fill="currentColor" className="text-foreground/30" />
+              
+              {/* Moving Arms */}
+              <g className="animate-push-arms">
+                  <path d="M-8,-5 L-20,10" stroke="currentColor" strokeWidth="4" className={primaryMuscles.includes('pectoralis') || primaryMuscles.includes('triceps') || primaryMuscles.includes('shoulders') ? "text-primary" : "text-foreground/80"} />
+                  <path d="M8,-5 L20,10" stroke="currentColor" strokeWidth="4" className={primaryMuscles.includes('pectoralis') || primaryMuscles.includes('triceps') || primaryMuscles.includes('shoulders') ? "text-primary" : "text-foreground/80"} />
+                  {/* Barbell/Weight */}
+                  <line x1="-25" y1="10" x2="25" y2="10" stroke="currentColor" strokeWidth="2" className="animate-push-bar text-foreground" />
+              </g>
+
+           </g>
         )}
-        
-        {/* Shoulder highlights */}
-        {(primaryMuscles.includes('anterior-deltoid') || primaryMuscles.includes('lateral-deltoid')) && (
-          <>
-            <circle cx="-12" cy="-12" r="4" fill="currentColor" className="text-primary/50" />
-            <circle cx="12" cy="-12" r="4" fill="currentColor" className="text-primary/50" />
-          </>
+
+        {/* Pull Animation Structure */}
+        {exerciseType === 'pull' && (
+            <g>
+                {/* Torso */}
+                <line x1="0" y1="-5" x2="0" y2="25" stroke="currentColor" strokeWidth="8" strokeLinecap="round" className="text-foreground/50" />
+                <circle cx="0" cy="-12" r="7" fill="currentColor" className="text-foreground/50" />
+
+                {/* Arms */}
+                <g className="animate-pull-arms">
+                   <path d="M-6,-8 L-25,-25" stroke="currentColor" strokeWidth="4" className={primaryMuscles.includes('lats') || primaryMuscles.includes('biceps') ? "text-primary" : "text-foreground/80"} />
+                   <path d="M6,-8 L25,-25" stroke="currentColor" strokeWidth="4" className={primaryMuscles.includes('lats') || primaryMuscles.includes('biceps') ? "text-primary" : "text-foreground/80"} />
+                   {/* Bar */}
+                   <line x1="-30" y1="-25" x2="30" y2="-25" stroke="currentColor" strokeWidth="3" className="animate-pull-bar text-foreground" />
+                </g>
+            </g>
         )}
+
+        {/* Fallback Static */}
+        {exerciseType === 'static' && (
+           <g>
+               <circle cx="0" cy="-24" r="6" fill="currentColor" className="text-foreground/70" />
+               <line x1="0" y1="-18" x2="0" y2="8" stroke="currentColor" strokeWidth="3" className="text-foreground/70" />
+               <line x1="-16" y1="-10" x2="0" y2="-14" stroke="currentColor" strokeWidth="3" className="text-foreground/70" />
+               <line x1="16" y1="-10" x2="0" y2="-14" stroke="currentColor" strokeWidth="3" className="text-foreground/70" />
+               <line x1="-8" y1="24" x2="0" y2="8" stroke="currentColor" strokeWidth="3" className="text-foreground/70" />
+               <line x1="8" y1="24" x2="0" y2="8" stroke="currentColor" strokeWidth="3" className="text-foreground/70" />
+           </g>
+        )}
+
+        {/* Dynamic Static Lifts (Deadlifts etc) uses static stickman but maybe highlighted? */}
+        {exerciseType === 'lift' && (
+           <g>
+            {/* Hinge position */}
+            <circle cx="10" cy="-20" r="6" fill="currentColor" className="text-foreground/70" />
+            <line x1="10" y1="-14" x2="-8" y2="0" stroke="currentColor" strokeWidth="3" className="text-foreground/70" /> {/* Torso leaning */}
+            <line x1="-8" y1="0" x2="-10" y2="25" stroke="currentColor" strokeWidth="3" className="text-foreground/70" /> {/* Legs */}
+            <line x1="8" y1="-10" x2="0" y2="20" stroke="currentColor" strokeWidth="3" className={primaryMuscles.includes('hamstrings') ? "text-primary" : "text-foreground/70"} /> {/* Arms reaching down */}
+           </g>
+        )}
+
       </g>
     </svg>
   );
@@ -287,6 +297,8 @@ function MuscleHighlight({
 function getExerciseType(exerciseName: string): 'push' | 'pull' | 'squat' | 'lift' | 'static' {
   const name = exerciseName.toLowerCase();
   
+  // Explicit overrides for better matching
+  
   if (name.includes('press') || name.includes('push') || name.includes('fly') || name.includes('dip')) {
     return 'push';
   }
@@ -296,7 +308,7 @@ function getExerciseType(exerciseName: string): 'push' | 'pull' | 'squat' | 'lif
   if (name.includes('squat') || name.includes('lunge') || name.includes('leg press')) {
     return 'squat';
   }
-  if (name.includes('deadlift') || name.includes('shrug') || name.includes('raise')) {
+  if (name.includes('deadlift') || name.includes('shrug') || name.includes('raise') || name.includes('extension')) {
     return 'lift';
   }
   
