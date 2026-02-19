@@ -38,6 +38,7 @@ import {
   getSuggestedWeightForExercise,
   saveExerciseHistoryFromWorkout
 } from "@/lib/storage";
+import { checkAndUpdatePR } from "@/lib/personalBests";
 import { getPersonalizedExercises } from "@/lib/workoutTemplates";
 import { onDataUpdated } from "@/lib/events";
 import { Workout, WorkoutType, WorkoutExercise, Exercise } from "@/lib/types";
@@ -306,6 +307,19 @@ export default function WorkoutPage() {
     };
     setWorkout(updated);
     saveWorkout(updated);
+
+    // Check for PR on completion (not un-completion)
+    const exercise = workout.exercises.find(ex => ex.id === exerciseId);
+    const set = exercise?.sets.find(s => s.id === setId);
+    if (exercise && set && !set.completed) {
+      // set.completed is the OLD value; !completed means we just marked it complete
+      const pr = checkAndUpdatePR(exercise.exercise.name, { ...set, completed: true });
+      if (pr) {
+        toast('🔥 New Personal Best!', {
+          description: `${exercise.exercise.name} — ${set.weight}kg × ${set.reps}`,
+        });
+      }
+    }
   };
 
   const updateSetValue = (exerciseId: string, setId: string, field: 'reps' | 'weight', delta: number) => {
