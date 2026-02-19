@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { Plus, X, Search, Flame, Beef } from "lucide-react";
+import { Plus, X, Search, Flame, Beef, Utensils } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +14,7 @@ import { WeeklyReviewCard } from "@/components/WeeklyReviewCard";
 import { CalorieAdjustmentCard } from "@/components/CalorieAdjustmentCard";
 import { WeeklyStreakCard } from "@/components/WeeklyStreakCard";
 import { AIPerformanceFeedback } from "@/components/AIPerformanceFeedback";
+import { EmptyState } from "@/components/EmptyState";
 import { 
   getUserProfile, 
   getMealsByDate, 
@@ -236,13 +237,12 @@ export default function TodayPage() {
           </div>
 
           {meals.length === 0 ? (
-            <div className="text-center py-10 text-muted-foreground animate-fade-in">
-              <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center mx-auto mb-3">
-                <Plus className="w-6 h-6 text-muted-foreground/60" />
-              </div>
-              <p className="font-medium">No meals logged yet</p>
-              <p className="text-sm mt-1">Track what you eat to hit your targets</p>
-            </div>
+            <EmptyState
+              icon={Utensils}
+              title="No meals logged yet"
+              description="Log your first meal to start tracking calories and protein."
+              className="py-8"
+            />
           ) : (
             meals.map((meal, index) => (
               <div 

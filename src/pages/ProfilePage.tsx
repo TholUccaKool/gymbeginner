@@ -8,6 +8,7 @@ import { PageHeader } from "@/components/layout/PageHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { getUserProfile, saveUserProfile } from "@/lib/storage";
 import { getPersonalBestsList, type PersonalBest } from "@/lib/personalBests";
+import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { PremiumPaywall, usePremiumGate } from "@/components/PremiumPaywall";
@@ -146,13 +147,13 @@ export default function ProfilePage() {
               </div>
 
               {prs.length === 0 ? (
-                <div className="flex flex-col items-center py-6 text-center">
-                  <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mb-3">
-                    <Dumbbell className="w-5 h-5 text-muted-foreground/60" />
-                  </div>
-                  <p className="text-sm text-muted-foreground">No personal records yet</p>
-                  <p className="text-xs text-muted-foreground/80 mt-1">Complete workouts to start tracking PRs.</p>
-                </div>
+                <EmptyState
+                  icon={Trophy}
+                  title="No personal records yet"
+                  description="Complete workouts to build your personal records."
+                  hint="PRs are set when you lift heavier, do more reps, or hit higher volume on a single set."
+                  className="py-6"
+                />
               ) : (
                 <div className="space-y-2">
                   {prs.slice(0, 5).map(pr => (
