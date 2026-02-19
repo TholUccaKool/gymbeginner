@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Dumbbell, Utensils, TrendingUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, Dumbbell, Utensils, TrendingUp, Trophy } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { getMeals, getWorkouts, getUserProfile } from "@/lib/storage";
+import { workoutHasPR } from "@/lib/personalBests";
 import { format, subDays, addDays, isSameDay } from "date-fns";
 
 export default function HistoryPage() {
@@ -171,7 +172,15 @@ export default function HistoryPage() {
                 </div>
                 {dayWorkout ? (
                   <>
-                    <p className="text-2xl font-display font-bold">{dayWorkout.name}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-2xl font-display font-bold">{dayWorkout.name}</p>
+                      {dayWorkout.completed && workoutHasPR(dayWorkout) && (
+                        <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-500/15 text-amber-500 text-[10px] font-bold uppercase tracking-wide">
+                          <Trophy className="w-3 h-3" />
+                          PR
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground mt-1">
                       {dayWorkout.completed ? (
                         <span className="text-status-success font-medium">Completed</span>

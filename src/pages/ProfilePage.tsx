@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings, Sparkles, Target, User, ChevronRight, Trash2, Moon, Sun, Crown, Bell } from "lucide-react";
+import { Settings, Sparkles, Target, User, ChevronRight, Trash2, Moon, Sun, Crown, Bell, Trophy, Dumbbell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,6 +7,7 @@ import { Switch } from "@/components/ui/switch";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
 import { getUserProfile, saveUserProfile } from "@/lib/storage";
+import { getPersonalBestsList, type PersonalBest } from "@/lib/personalBests";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { PremiumPaywall, usePremiumGate } from "@/components/PremiumPaywall";
@@ -131,6 +132,55 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
+
+        {/* Personal Records */}
+        {(() => {
+          const prs = getPersonalBestsList();
+          return (
+            <div className="bg-card rounded-2xl border border-border/60 p-6 mb-5 shadow-sm animate-slide-up" style={{ animationDelay: '75ms' }}>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center">
+                  <Trophy className="w-4 h-4 text-amber-500" />
+                </div>
+                <h3 className="font-semibold">Personal Records</h3>
+              </div>
+
+              {prs.length === 0 ? (
+                <div className="flex flex-col items-center py-6 text-center">
+                  <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mb-3">
+                    <Dumbbell className="w-5 h-5 text-muted-foreground/60" />
+                  </div>
+                  <p className="text-sm text-muted-foreground">No personal records yet</p>
+                  <p className="text-xs text-muted-foreground/80 mt-1">Complete workouts to start tracking PRs.</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {prs.slice(0, 5).map(pr => (
+                    <div
+                      key={pr.exerciseName}
+                      className="flex items-center justify-between p-3 bg-secondary/40 rounded-xl"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium truncate">{pr.exerciseName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {pr.maxWeightReps}×{pr.maxWeight}kg · Vol {pr.maxVolume}kg
+                        </p>
+                      </div>
+                      <div className="text-right flex-shrink-0 ml-3">
+                        <p className="text-lg font-display font-bold">{pr.maxWeight}<span className="text-xs text-muted-foreground font-normal">kg</span></p>
+                      </div>
+                    </div>
+                  ))}
+                  {prs.length > 5 && (
+                    <p className="text-xs text-muted-foreground text-center pt-1">
+                      +{prs.length - 5} more exercises
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* Nutrition Targets */}
         <Dialog open={isEditingTargets} onOpenChange={setIsEditingTargets}>
