@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Brain, Dumbbell, Flame, TrendingUp, Award, Sparkles } from "lucide-react";
+import { Brain, Dumbbell, Flame, TrendingUp, Award, Sparkles, BarChart3 } from "lucide-react";
 import { ProFeatureGate } from "@/components/ProFeatureGate";
+import { EmptyState } from "@/components/EmptyState";
 import { getWorkouts, getMeals, getUserProfile, getCoachMemory, getExerciseHistory } from "@/lib/storage";
 import { getSimulatedDate } from "@/lib/debugDate";
 import { onProfileUpdated } from "@/lib/events";
@@ -155,7 +156,7 @@ export function AIPerformanceFeedback({ onUpgrade }: AIPerformanceFeedbackProps)
   // Empty state for premium users with no workout/meal data yet
   const emptyState = (
     <div className="bg-card rounded-2xl border border-border/60 p-5 shadow-sm">
-      <div className="flex items-center gap-2 mb-4">
+      <div className="flex items-center gap-2 mb-2">
         <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
           <Brain className="w-4 h-4 text-primary" />
         </div>
@@ -164,15 +165,13 @@ export function AIPerformanceFeedback({ onUpgrade }: AIPerformanceFeedbackProps)
           <p className="text-[10px] text-muted-foreground">This week's training insights</p>
         </div>
       </div>
-      <div className="flex flex-col items-center py-6 text-center">
-        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mb-3">
-          <TrendingUp className="w-5 h-5 text-muted-foreground/60" />
-        </div>
-        <p className="text-sm font-medium text-muted-foreground">No insights yet</p>
-        <p className="text-xs text-muted-foreground/80 mt-1 max-w-[220px]">
-          Complete workouts and log meals this week to generate insights.
-        </p>
-      </div>
+      <EmptyState
+        icon={BarChart3}
+        title="No insights yet"
+        description="Complete workouts and log meals this week to unlock insights."
+        hint="Insights update every week based on your training data."
+        className="py-6"
+      />
     </div>
   );
 

@@ -1,12 +1,15 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, Dumbbell, Utensils, TrendingUp, Trophy } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ChevronLeft, ChevronRight, Dumbbell, Utensils, TrendingUp, Trophy, Calendar } from "lucide-react";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { BottomNav } from "@/components/layout/BottomNav";
+import { EmptyState } from "@/components/EmptyState";
 import { getMeals, getWorkouts, getUserProfile } from "@/lib/storage";
 import { workoutHasPR } from "@/lib/personalBests";
 import { format, subDays, addDays, isSameDay } from "date-fns";
 
 export default function HistoryPage() {
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const profile = getUserProfile();
   const targets = profile?.nutritionTargets ?? { calories: 2000, protein: 150 };
@@ -127,13 +130,11 @@ export default function HistoryPage() {
         </div>
 
         {isFuture ? (
-          <div className="text-center py-16 text-muted-foreground animate-fade-in">
-            <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
-              <TrendingUp className="w-8 h-8 text-muted-foreground/60" />
-            </div>
-            <p className="font-medium">No data for future dates</p>
-            <p className="text-sm mt-1">Check back later!</p>
-          </div>
+          <EmptyState
+            icon={Calendar}
+            title="No data for future dates"
+            description="Check back later to see your progress."
+          />
         ) : (
           <>
             {/* Day Summary */}
@@ -272,13 +273,15 @@ export default function HistoryPage() {
             )}
 
             {dayMeals.length === 0 && !dayWorkout && (
-              <div className="text-center py-16 text-muted-foreground animate-fade-in">
-                <div className="w-16 h-16 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
-                  <TrendingUp className="w-8 h-8 text-muted-foreground/60" />
-                </div>
-                <p className="font-medium">No activity logged</p>
-                <p className="text-sm mt-1">This day is still empty</p>
-              </div>
+              <EmptyState
+                icon={Calendar}
+                title="Your training history will appear here"
+                description="Start logging workouts and meals to see your daily progress."
+                action={{
+                  label: "Start Your First Workout",
+                  onClick: () => navigate('/workout'),
+                }}
+              />
             )}
           </>
         )}
