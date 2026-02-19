@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Crown, Sparkles, TrendingUp, Brain, Calendar } from "lucide-react";
+import { Crown, Sparkles, TrendingUp, Brain, Calendar, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,8 +19,9 @@ interface PremiumPaywallProps {
 const PREMIUM_FEATURES = [
   { icon: Calendar, label: "Weekly reviews", description: "See how you did and what's changing" },
   { icon: TrendingUp, label: "Smart adjustments", description: "Calories and protein adapt to your progress" },
-  { icon: Brain, label: "Coach memory", description: "Your history shapes future recommendations" },
+  { icon: Brain, label: "AI performance feedback", description: "Weekly training insights and advice" },
   { icon: Sparkles, label: "Daily guidance", description: "Know what to focus on each day" },
+  { icon: Zap, label: "Coach memory", description: "Your history shapes future recommendations" },
 ];
 
 export function PremiumPaywall({ open, onOpenChange, feature }: PremiumPaywallProps) {
