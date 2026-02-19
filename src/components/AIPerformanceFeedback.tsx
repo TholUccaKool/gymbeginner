@@ -1,8 +1,11 @@
-import { useMemo } from "react";
-import { Brain, Dumbbell, Flame, TrendingUp, Award } from "lucide-react";
+import { useState, useEffect, useMemo, useRef } from "react";
+import { Brain, Dumbbell, Flame, TrendingUp, Award, Sparkles } from "lucide-react";
 import { ProFeatureGate } from "@/components/ProFeatureGate";
 import { getWorkouts, getMeals, getUserProfile, getCoachMemory, getExerciseHistory } from "@/lib/storage";
 import { getSimulatedDate } from "@/lib/debugDate";
+import { onProfileUpdated } from "@/lib/events";
+import { isFeatureUnlocked } from "@/lib/features";
+import { toast } from "sonner";
 
 interface AIPerformanceFeedbackProps {
   onUpgrade?: () => void;
@@ -30,6 +33,11 @@ function generateWeeklyInsights(): WeeklyInsight[] {
 
   const thisWeekWorkouts = workouts.filter(w => w.date >= weekStartStr && w.completed);
   const thisWeekMeals = meals.filter(m => m.date >= weekStartStr);
+
+  // Return null-signal if no data at all
+  if (thisWeekWorkouts.length === 0 && thisWeekMeals.length === 0) {
+    return [];
+  }
 
   const insights: WeeklyInsight[] = [];
 
@@ -75,9 +83,12 @@ function generateWeeklyInsights(): WeeklyInsight[] {
 
   // Progress detection from exercise history
   const historyEntries = Object.values(exerciseHistory);
+  const weekStart2 = new Date(today);
+  weekStart2.setDate(today.getDate() - today.getDay());
+  weekStart2.setHours(0, 0, 0, 0);
   const recentPRs = historyEntries.filter(h => {
     const lastUsed = new Date(h.lastUsedAt);
-    return lastUsed >= weekStart && h.allSetsCompleted && h.suggestedWeight > h.lastWeight;
+    return lastUsed >= weekStart2 && h.allSetsCompleted && h.suggestedWeight > h.lastWeight;
   });
 
   if (recentPRs.length > 0) {
@@ -100,15 +111,6 @@ function generateWeeklyInsights(): WeeklyInsight[] {
     }
   }
 
-  // Fallback if no insights
-  if (insights.length === 0) {
-    insights.push({
-      title: 'Getting started',
-      body: 'Complete a workout and log some meals this week to get personalized insights.',
-      type: 'consistency',
-    });
-  }
-
   return insights;
 }
 
@@ -127,9 +129,55 @@ const INSIGHT_COLORS = {
 };
 
 export function AIPerformanceFeedback({ onUpgrade }: AIPerformanceFeedbackProps) {
-  const insights = useMemo(generateWeeklyInsights, []);
+  // Track premium state reactively via profile events
+  const [isPremium, setIsPremium] = useState(() => isFeatureUnlocked('ai_performance_feedback'));
+  const wasPremiumRef = useRef(isPremium);
 
-  const content = (
+  useEffect(() => {
+    const unsub = onProfileUpdated(() => {
+      const nowUnlocked = isFeatureUnlocked('ai_performance_feedback');
+      setIsPremium(nowUnlocked);
+
+      // Show toast only on the transition from locked → unlocked
+      if (nowUnlocked && !wasPremiumRef.current) {
+        toast.success('Pro unlocked – AI insights activated', {
+          icon: <Sparkles className="w-4 h-4 text-amber-500" />,
+        });
+      }
+      wasPremiumRef.current = nowUnlocked;
+    });
+    return unsub;
+  }, []);
+
+  const insights = useMemo(generateWeeklyInsights, [isPremium]);
+  const hasData = insights.length > 0;
+
+  // Empty state for premium users with no workout/meal data yet
+  const emptyState = (
+    <div className="bg-card rounded-2xl border border-border/60 p-5 shadow-sm">
+      <div className="flex items-center gap-2 mb-4">
+        <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
+          <Brain className="w-4 h-4 text-primary" />
+        </div>
+        <div>
+          <h3 className="font-display font-semibold text-sm">AI Performance Feedback</h3>
+          <p className="text-[10px] text-muted-foreground">This week's training insights</p>
+        </div>
+      </div>
+      <div className="flex flex-col items-center py-6 text-center">
+        <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mb-3">
+          <TrendingUp className="w-5 h-5 text-muted-foreground/60" />
+        </div>
+        <p className="text-sm font-medium text-muted-foreground">No insights yet</p>
+        <p className="text-xs text-muted-foreground/80 mt-1 max-w-[220px]">
+          Complete workouts and log meals this week to generate insights.
+        </p>
+      </div>
+    </div>
+  );
+
+  // Insights content (used for both preview and unlocked state)
+  const insightsContent = (
     <div className="bg-card rounded-2xl border border-border/60 p-5 shadow-sm">
       <div className="flex items-center gap-2 mb-4">
         <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -142,7 +190,9 @@ export function AIPerformanceFeedback({ onUpgrade }: AIPerformanceFeedbackProps)
       </div>
 
       <div className="space-y-3">
-        {insights.map((insight, i) => {
+        {(hasData ? insights : [
+          { title: 'Getting started', body: 'Complete workouts this week to generate insights.', type: 'consistency' as const },
+        ]).map((insight, i) => {
           const Icon = INSIGHT_ICONS[insight.type];
           const colorClass = INSIGHT_COLORS[insight.type];
           return (
@@ -161,14 +211,33 @@ export function AIPerformanceFeedback({ onUpgrade }: AIPerformanceFeedbackProps)
     </div>
   );
 
+  // Premium + no data → clean empty state
+  if (isPremium && !hasData) {
+    return (
+      <div className="mb-4 animate-slide-up">
+        {emptyState}
+      </div>
+    );
+  }
+
+  // Premium + has data → full insights
+  if (isPremium) {
+    return (
+      <div className="mb-4 animate-slide-up">
+        {insightsContent}
+      </div>
+    );
+  }
+
+  // Free user → gated with blurred preview
   return (
     <div className="mb-4 animate-slide-up">
       <ProFeatureGate
         featureId="ai_performance_feedback"
-        lockedPreview={content}
+        lockedPreview={insightsContent}
         onUpgrade={onUpgrade}
       >
-        {content}
+        {insightsContent}
       </ProFeatureGate>
     </div>
   );
