@@ -12,6 +12,8 @@ import { TodayStatus } from "@/components/TodayStatus";
 import { DailyGuidance } from "@/components/DailyGuidance";
 import { WeeklyReviewCard } from "@/components/WeeklyReviewCard";
 import { CalorieAdjustmentCard } from "@/components/CalorieAdjustmentCard";
+import { WeeklyStreakCard } from "@/components/WeeklyStreakCard";
+import { AIPerformanceFeedback } from "@/components/AIPerformanceFeedback";
 import { 
   getUserProfile, 
   getMealsByDate, 
@@ -161,11 +163,17 @@ export default function TodayPage() {
           />
         )}
 
+        {/* Weekly Streak */}
+        <WeeklyStreakCard />
+
         {/* Weekly Review (if due) */}
         <WeeklyReviewCard onShowPaywall={() => setShowPaywall(true)} />
 
         {/* Today's Primary Action */}
         <TodayStatus key={refreshKey} />
+
+        {/* AI Performance Feedback (Pro feature with locked preview) */}
+        <AIPerformanceFeedback onUpgrade={() => setShowPaywall(true)} />
 
         {/* Progress Rings */}
         <div className="flex justify-center gap-10 py-6 animate-scale-in">
