@@ -51,7 +51,7 @@ export default function TodayPage() {
   const [adjustedCalorieTarget, setAdjustedCalorieTarget] = useState<number | null>(null);
   // Key to force refresh of child components when data changes externally
   const [refreshKey, setRefreshKey] = useState(0);
-  const { showPaywall, setShowPaywall, paywallFeature, isPremium } = usePremiumGate();
+  const { showPaywall, setShowPaywall, paywallFeature } = usePremiumGate();
   const profile = getUserProfile();
   const baseTargets = profile?.nutritionTargets ?? { calories: 2000, protein: 150 };
   

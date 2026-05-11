@@ -1,7 +1,7 @@
 // Feature flag system for monetization and progressive feature gating
 // All flags are offline-first, stored in localStorage
 
-import { getUserProfile } from './storage';
+import { getUserProfile, isCoachTrialActive } from './storage';
 
 export type FeatureId = 
   | 'weekly_reviews'
@@ -82,16 +82,28 @@ export const FEATURES: Record<FeatureId, FeatureConfig> = {
 };
 
 /**
+ * Check if the user is on the paid plan (not trial).
+ * Use for display-only checks like "show PREMIUM badge".
+ */
+export function isPaidPlan(): boolean {
+  const profile = getUserProfile();
+  return profile?.isPremium === true;
+}
+
+/**
  * Check if a feature is unlocked for the current user.
- * Free-tier features are always unlocked. Pro features require isPremium.
+ * Free-tier features are always unlocked.
+ * Pro features require isPremium OR an active coach trial.
  */
 export function isFeatureUnlocked(featureId: FeatureId): boolean {
   const config = FEATURES[featureId];
   if (!config) return false;
   if (config.tier === 'free') return true;
-  
+
   const profile = getUserProfile();
-  return profile?.isPremium ?? false;
+  if (profile?.isPremium) return true;
+
+  return isCoachTrialActive();
 }
 
 /**

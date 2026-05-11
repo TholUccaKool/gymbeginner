@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
 import { TrendingUp, TrendingDown, Minus, X, Crown, Dumbbell, Flame, Beef } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { 
-  shouldShowWeeklyReview, 
-  generateWeeklyReview, 
+import {
+  shouldShowWeeklyReview,
+  generateWeeklyReview,
   getLatestWeeklyReview,
-  hasCoachAccess,
-  getUserProfile
+  hasCoachAccess
 } from "@/lib/storage";
+import { isFeatureUnlocked } from "@/lib/features";
 import { WeeklyReview } from "@/lib/types";
 
 interface WeeklyReviewCardProps {
@@ -41,8 +41,7 @@ export function WeeklyReviewCard({ onDismiss, onShowPaywall }: WeeklyReviewCardP
   
   if (dismissed || !review) return null;
   
-  const profile = getUserProfile();
-  const isPremium = profile?.isPremium;
+  const hasFullAccess = isFeatureUnlocked('weekly_reviews');
   
   const handleDismiss = () => {
     setDismissed(true);
@@ -126,7 +125,7 @@ export function WeeklyReviewCard({ onDismiss, onShowPaywall }: WeeklyReviewCardP
         </div>
         
         {/* Adjustment notice */}
-        {review.adjustmentType !== 'none' && isPremium && (
+        {review.adjustmentType !== 'none' && hasFullAccess && (
           <div className="bg-primary/10 rounded-xl p-3 mb-4">
             <p className="text-sm font-medium flex items-center gap-2">
               {getAdjustmentIcon()}
@@ -140,7 +139,7 @@ export function WeeklyReviewCard({ onDismiss, onShowPaywall }: WeeklyReviewCardP
         )}
         
         {/* Premium upsell for non-premium users */}
-        {!isPremium && review.adjustmentType !== 'none' && (
+        {!hasFullAccess && review.adjustmentType !== 'none' && (
           <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 rounded-xl p-4">
             <p className="text-sm font-medium mb-2 flex items-center gap-2">
               <Crown className="w-4 h-4 text-amber-500" />

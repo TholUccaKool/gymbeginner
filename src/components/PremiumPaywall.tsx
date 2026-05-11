@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { getUserProfile, saveUserProfile } from "@/lib/storage";
+import { isFeatureUnlocked, type FeatureId } from "@/lib/features";
 import { toast } from "sonner";
 
 interface PremiumPaywallProps {
@@ -151,14 +152,14 @@ export function PremiumPaywall({ open, onOpenChange, feature }: PremiumPaywallPr
   );
 }
 
-// Hook to check premium and show paywall
-export function usePremiumGate() {
+// Hook to check feature access and show paywall
+export function usePremiumGate(featureId?: FeatureId) {
   const [showPaywall, setShowPaywall] = useState(false);
   const [paywallFeature, setPaywallFeature] = useState<string>();
 
-  const checkPremium = (featureName?: string): boolean => {
-    const profile = getUserProfile();
-    if (profile?.isPremium) {
+  const checkAccess = (featureName?: string): boolean => {
+    const id = featureId ?? 'daily_guidance';
+    if (isFeatureUnlocked(id)) {
       return true;
     }
     setPaywallFeature(featureName);
@@ -166,16 +167,16 @@ export function usePremiumGate() {
     return false;
   };
 
-  const isPremium = (): boolean => {
-    const profile = getUserProfile();
-    return profile?.isPremium ?? false;
+  const hasAccess = (): boolean => {
+    const id = featureId ?? 'daily_guidance';
+    return isFeatureUnlocked(id);
   };
 
   return {
     showPaywall,
     setShowPaywall,
     paywallFeature,
-    checkPremium,
-    isPremium,
+    checkAccess,
+    hasAccess,
   };
 }
