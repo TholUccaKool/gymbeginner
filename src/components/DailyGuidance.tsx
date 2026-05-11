@@ -1,6 +1,6 @@
 import { MessageSquare, Crown, Calendar, TrendingUp, Lightbulb } from "lucide-react";
 import { getUserProfile, getTodayPlannedWorkout, getWorkoutByDate, getTodayDate, hasCoachAccess, getDaysLeftInTrial } from "@/lib/storage";
-import { usePremiumGate } from "@/components/PremiumPaywall";
+import { isPaidPlan } from "@/lib/features";
 
 interface DailyGuidanceProps {
   onShowPaywall?: () => void;
@@ -11,8 +11,8 @@ export function DailyGuidance({ onShowPaywall }: DailyGuidanceProps) {
   const coachProfile = profile?.coachProfile;
   const todayPlan = getTodayPlannedWorkout();
   const existingWorkout = getWorkoutByDate(getTodayDate());
-  const { isPremium } = usePremiumGate();
-  
+  const paidPlan = isPaidPlan();
+
   const hasAccess = hasCoachAccess();
   const daysLeft = getDaysLeftInTrial();
   const isRestDay = todayPlan?.isRestDay;
@@ -63,7 +63,7 @@ export function DailyGuidance({ onShowPaywall }: DailyGuidanceProps) {
   };
   
   // Trial banner with days remaining
-  if (!isPremium() && hasAccess && daysLeft > 0 && daysLeft <= 7) {
+  if (!paidPlan && hasAccess && daysLeft > 0 && daysLeft <= 7) {
     return (
       <div className="bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/20 rounded-xl p-4 mb-6 animate-slide-up" style={{ animationDelay: '100ms' }}>
         <div className="flex items-start gap-3">
@@ -127,7 +127,7 @@ export function DailyGuidance({ onShowPaywall }: DailyGuidanceProps) {
           </div>
         </div>
         
-        {isPremium() && (
+        {paidPlan && (
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-primary/10 text-xs text-muted-foreground">
             <TrendingUp className="w-3.5 h-3.5 text-primary" />
             <span>Your targets adjust based on your progress each week.</span>

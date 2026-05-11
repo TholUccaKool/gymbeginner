@@ -1,17 +1,19 @@
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  getUserProfile, 
-  getMealsByDate, 
-  getDailyNutritionTotals, 
+import {
+  getUserProfile,
+  getMealsByDate,
+  getDailyNutritionTotals,
   getTodayDate,
   getWorkoutByDate,
   saveMeal,
   saveWorkout,
-  generateId
+  generateId,
+  getCoachMemory
 } from "./storage";
 import { getPersonalizedExercises } from "./workoutTemplates";
 import { Meal, Workout } from "./types";
 import { emitDataUpdated } from "./events";
+import { getSimulatedDate, getSimulatedTodayDate } from "./debugDate";
 
 export interface ChatMessage {
   id: string;
@@ -34,6 +36,15 @@ export interface CoachResponse {
   requiresConfirmation: boolean;
 }
 
+interface CoachMemorySummary {
+  currentWorkoutStreak: number;
+  longestWorkoutStreak: number;
+  currentNutritionStreak: number;
+  nutritionDaysLast7: number;
+  missedWorkoutsLast14: number;
+  daysSinceLastWeeklyReview: number | null;
+}
+
 interface UserContext {
   nutritionTargets: { calories: number; protein: number };
   todayMeals: { name: string; calories: number; protein?: number }[];
@@ -43,6 +54,14 @@ interface UserContext {
   todayWorkout: { type: string; completed: boolean } | null;
   dayOfWeek: number;
   todayDate: string;
+  coachMemorySummary?: CoachMemorySummary;
+}
+
+// Count how many days between two YYYY-MM-DD date strings
+function daysBetween(dateA: string, dateB: string): number {
+  const a = new Date(dateA + 'T00:00:00');
+  const b = new Date(dateB + 'T00:00:00');
+  return Math.round(Math.abs(a.getTime() - b.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 // Build context from current app state
@@ -52,10 +71,35 @@ function buildUserContext(): UserContext {
   const meals = getMealsByDate(todayDate);
   const totals = getDailyNutritionTotals(todayDate);
   const workout = getWorkoutByDate(todayDate);
-  
+
   const workoutDays = profile?.workoutDays ?? profile?.coachProfile?.workoutDays ?? [];
   const trainingDays = profile?.trainingDays ?? profile?.coachProfile?.trainingDays ?? 3;
-  
+
+  const memory = getCoachMemory();
+  let coachMemorySummary: CoachMemorySummary | undefined;
+
+  if (memory) {
+    const simToday = getSimulatedTodayDate();
+    const nutritionDaysLast7 = memory.nutritionDays.filter(
+      d => daysBetween(d.date, simToday) <= 7
+    ).length;
+    const missedWorkoutsLast14 = memory.missedWorkouts.filter(
+      d => daysBetween(d.date, simToday) <= 14
+    ).length;
+    const daysSinceLastWeeklyReview = memory.lastWeeklyReview
+      ? daysBetween(memory.lastWeeklyReview, simToday)
+      : null;
+
+    coachMemorySummary = {
+      currentWorkoutStreak: memory.currentWorkoutStreak,
+      longestWorkoutStreak: memory.longestWorkoutStreak,
+      currentNutritionStreak: memory.currentNutritionStreak,
+      nutritionDaysLast7,
+      missedWorkoutsLast14,
+      daysSinceLastWeeklyReview,
+    };
+  }
+
   return {
     nutritionTargets: profile?.nutritionTargets ?? { calories: 2000, protein: 150 },
     todayMeals: meals.map(m => ({ name: m.name, calories: m.calories, protein: m.protein })),
@@ -63,8 +107,9 @@ function buildUserContext(): UserContext {
     workoutDays,
     trainingDays,
     todayWorkout: workout ? { type: workout.type, completed: workout.completed } : null,
-    dayOfWeek: new Date().getDay(),
+    dayOfWeek: getSimulatedDate().getDay(),
     todayDate,
+    ...(coachMemorySummary && { coachMemorySummary }),
   };
 }
 

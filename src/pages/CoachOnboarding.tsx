@@ -39,7 +39,7 @@ export default function CoachOnboarding() {
   const [step, setStep] = useState<Step>('goal');
   const [coachProfile, setCoachProfile] = useState<Partial<CoachProfile>>({});
   const [generatedPlan, setGeneratedPlan] = useState<{ calories: number; protein: number } | null>(null);
-  const { showPaywall, setShowPaywall, paywallFeature, isPremium } = usePremiumGate();
+  const { showPaywall, setShowPaywall, paywallFeature, hasAccess } = usePremiumGate('daily_guidance');
 
   // Redirect if already completed onboarding (prevent asking same questions twice)
   useEffect(() => {
@@ -101,7 +101,7 @@ export default function CoachOnboarding() {
     if (!profile || !generatedPlan || !coachProfile.goal || !coachProfile.trainingDays) return;
 
     // Start the trial if not premium
-    if (!isPremium()) {
+    if (!hasAccess()) {
       startCoachTrial();
     }
     
@@ -376,7 +376,7 @@ export default function CoachOnboarding() {
             </div>
 
             {/* Trial Info - show for free users */}
-            {!isPremium() && (
+            {!hasAccess() && (
               <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30 mb-6">
                 <div className="flex items-center gap-2 mb-2">
                   <Calendar className="w-5 h-5 text-amber-500" />
@@ -408,7 +408,7 @@ export default function CoachOnboarding() {
                 className="w-full"
                 onClick={handleApplyPlan}
               >
-                {isPremium() ? (
+                {hasAccess() ? (
                   <>Apply My Plan <Check className="w-4 h-4 ml-2" /></>
                 ) : (
                   <>
@@ -418,7 +418,7 @@ export default function CoachOnboarding() {
                 )}
               </Button>
               
-              {!isPremium() && (
+              {!hasAccess() && (
                 <button
                   onClick={handleContinueWithoutApplying}
                   className="w-full text-center text-sm text-muted-foreground hover:text-foreground transition-colors py-2"

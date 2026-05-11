@@ -133,9 +133,9 @@ export function getWorkoutPRExercises(workout: Workout): Set<string> {
       }
       const volume = set.weight * set.reps;
       if (
-        set.weight >= existing.maxWeight ||
-        set.reps >= existing.maxRepsAtWeight ||
-        volume >= existing.maxVolume
+        set.weight > existing.maxWeight ||
+        set.reps > existing.maxRepsAtWeight ||
+        volume > existing.maxVolume
       ) {
         prExercises.add(name);
       }
@@ -159,8 +159,8 @@ export function workoutHasPR(workout: Workout): boolean {
       if (!existing) continue; // can't determine retroactively without stored context
       const volume = set.weight * set.reps;
       if (
-        set.weight >= existing.maxWeight ||
-        volume >= existing.maxVolume
+        set.weight > existing.maxWeight ||
+        volume > existing.maxVolume
       ) {
         return true;
       }

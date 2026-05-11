@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { Dumbbell, Coffee, Check } from "lucide-react";
 import { getUserProfile, getWorkoutByDate } from "@/lib/storage";
+import { getSimulatedDate } from "@/lib/debugDate";
 import { cn } from "@/lib/utils";
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
@@ -20,9 +21,9 @@ export function WeeklyBar() {
   const workoutDays = profile?.workoutDays ?? profile?.coachProfile?.workoutDays ?? [];
   
   const weekDays = useMemo(() => {
-    const today = new Date();
+    const today = getSimulatedDate();
     const todayDayOfWeek = today.getDay();
-    
+
     // Get the start of the current week (Sunday)
     const weekStart = new Date(today);
     weekStart.setDate(today.getDate() - todayDayOfWeek);

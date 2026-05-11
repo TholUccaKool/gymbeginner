@@ -1,5 +1,6 @@
 import { UserProfile, Meal, Workout, WeeklyPlan, FoodSuggestion, WorkoutType, CoachMemory, WeeklyReview, NutritionDay, ExerciseHistory } from './types';
 import { emitProfileUpdated } from './events';
+import { getSimulatedDate } from './debugDate';
 
 const STORAGE_KEYS = {
   USER_PROFILE: 'fittrack_user_profile',
@@ -122,7 +123,7 @@ export const saveWeeklyPlan = (plan: WeeklyPlan): void => {
 // Get today's planned workout based on user's training schedule
 export const getTodayPlannedWorkout = (): { type: WorkoutType; isRestDay: boolean } | null => {
   const profile = getUserProfile();
-  const dayOfWeek = new Date().getDay(); // 0 = Sunday, 6 = Saturday
+  const dayOfWeek = getSimulatedDate().getDay(); // 0 = Sunday, 6 = Saturday
   
   // Check for user-selected workout days (both experienced and new users)
   const workoutDays = profile?.workoutDays ?? profile?.coachProfile?.workoutDays;

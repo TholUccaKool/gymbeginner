@@ -10,6 +10,15 @@ interface ChatMessage {
   content: string;
 }
 
+interface CoachMemorySummary {
+  currentWorkoutStreak: number;
+  longestWorkoutStreak: number;
+  currentNutritionStreak: number;
+  nutritionDaysLast7: number;
+  missedWorkoutsLast14: number;
+  daysSinceLastWeeklyReview: number | null;
+}
+
 interface UserContext {
   nutritionTargets: { calories: number; protein: number };
   todayMeals: { name: string; calories: number; protein?: number }[];
@@ -19,6 +28,7 @@ interface UserContext {
   todayWorkout: { type: string; completed: boolean } | null;
   dayOfWeek: number;
   todayDate: string;
+  coachMemorySummary?: CoachMemorySummary;
 }
 
 const SYSTEM_PROMPT = `You are FitTrack Coach, a friendly and supportive AI fitness coach. Your role is to help users manage their fitness journey through natural conversation.
@@ -127,7 +137,17 @@ You have access to the user's current context including:
 - Their workout schedule
 - Today's planned workout
 
-Use this information to give personalized, relevant responses.`;
+Use this information to give personalized, relevant responses.
+
+## Behavioral Memory (coachMemorySummary)
+The user context may include a \`coachMemorySummary\` field reflecting the user's recent behavior (streaks, missed workouts, nutrition consistency). Follow these rules strictly:
+
+1. Use memory to be **aware**, NEVER to lecture, shame, or lead with it.
+2. Do NOT reference memory unprompted unless it is genuinely relevant to the user's current question. If the user asks "what should I eat?", do not respond with "I notice you have a 3-day streak."
+3. Acknowledge streaks ONLY when the user shares something positive, asks for encouragement, or hits a milestone (streaks divisible by 7 or a new longest-ever streak).
+4. Never mention missed workouts unless the user themselves brings up missing one or asks for accountability. Even then, frame it neutrally — "happens to everyone, here's how to get back on track" — never "you missed X workouts."
+5. If currentWorkoutStreak is 0 and missedWorkoutsLast14 > 0, treat the user as someone re-engaging, not someone who "failed." Be welcoming, not corrective.
+6. Memory is awareness, not surveillance. When in doubt, don't reference it.`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -232,7 +252,7 @@ function buildContextMessage(ctx: UserContext): string {
   const caloriesRemaining = ctx.nutritionTargets.calories - ctx.todayTotals.calories;
   const proteinRemaining = ctx.nutritionTargets.protein - ctx.todayTotals.protein;
 
-  return `## Current User Context (${dayNames[ctx.dayOfWeek]}, ${ctx.todayDate})
+  let contextStr = `## Current User Context (${dayNames[ctx.dayOfWeek]}, ${ctx.todayDate})
 
 ### Nutrition Targets
 - Daily calories: ${ctx.nutritionTargets.calories} cal
@@ -246,4 +266,19 @@ function buildContextMessage(ctx: UserContext): string {
 ### Workout Schedule
 - Training days: ${ctx.trainingDays} per week (${workoutDayNames})
 - Today's workout: ${ctx.todayWorkout ? `${ctx.todayWorkout.type} (${ctx.todayWorkout.completed ? 'completed' : 'pending'})` : 'Rest day'}`;
+
+  if (ctx.coachMemorySummary) {
+    const m = ctx.coachMemorySummary;
+    contextStr += `
+
+### Behavioral Memory
+- Current workout streak: ${m.currentWorkoutStreak} days
+- Longest workout streak: ${m.longestWorkoutStreak} days
+- Current nutrition streak: ${m.currentNutritionStreak} days
+- Nutrition days (last 7): ${m.nutritionDaysLast7}
+- Missed workouts (last 14 days): ${m.missedWorkoutsLast14}
+- Days since last weekly review: ${m.daysSinceLastWeeklyReview ?? 'none yet'}`;
+  }
+
+  return contextStr;
 }

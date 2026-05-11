@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { toast } from "sonner";
 import { useTheme } from "next-themes";
 import { PremiumPaywall, usePremiumGate } from "@/components/PremiumPaywall";
+import { isPaidPlan } from "@/lib/features";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +27,8 @@ export default function ProfilePage() {
   const [targets, setTargets] = useState(profile?.nutritionTargets ?? { calories: 2000, protein: 150 });
   const [isEditingTargets, setIsEditingTargets] = useState(false);
   const { theme, setTheme } = useTheme();
-  const { showPaywall, setShowPaywall, paywallFeature, checkPremium, isPremium } = usePremiumGate();
+  const { showPaywall, setShowPaywall, paywallFeature, checkAccess } = usePremiumGate();
+  const paidPlan = isPaidPlan();
   const [, forceUpdate] = useState({});
 
   const handleSaveTargets = () => {
@@ -79,7 +81,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-4">
             <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/20 relative">
               <User className="w-8 h-8 text-primary-foreground" />
-              {isPremium() && (
+              {paidPlan && (
                 <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md">
                   <Crown className="w-3.5 h-3.5 text-white" />
                 </div>
@@ -90,7 +92,7 @@ export default function ProfilePage() {
                 <h2 className="font-display font-bold text-lg">
                   {profile?.experienceLevel === 'new' ? 'Coached User' : 'Experienced Lifter'}
                 </h2>
-                {isPremium() && (
+                {paidPlan && (
                   <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-white">
                     PREMIUM
                   </span>
@@ -252,7 +254,7 @@ export default function ProfilePage() {
               <div>
                 <h3 className="font-semibold">AI Coach</h3>
                 <p className="text-sm text-muted-foreground">
-                  {isPremium() 
+                  {paidPlan 
                     ? 'Adjust your plan anytime' 
                     : 'Generate a personalized plan for free'}
                 </p>
@@ -318,17 +320,17 @@ export default function ProfilePage() {
               <Crown className="w-5 h-5 text-amber-500" />
               <div>
                 <p className="font-medium text-sm">
-                  {isPremium() ? 'Premium Active' : 'Free Plan'}
+                  {paidPlan ? 'Premium Active' : 'Free Plan'}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {isPremium() 
+                  {paidPlan 
                     ? 'Ongoing coaching enabled' 
                     : 'You can track meals & workouts'}
                 </p>
               </div>
             </div>
             <Switch 
-              checked={isPremium()}
+              checked={paidPlan}
               onCheckedChange={togglePremiumDemo}
             />
           </div>
