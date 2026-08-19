@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-FitTrack is an offline-first fitness and nutrition tracking PWA (also Capacitor-wrapped for iOS/Android). Built with React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui. All user data lives in localStorage; the only server call is the AI coach chat via a Supabase Edge Function that proxies to Google Gemini (via Lovable AI gateway). Two user paths: "experienced" (self-directed tracker) and "new" (AI-coached with generated nutrition targets and workout splits). Monetisation is a soft premium gate with a 7-day free trial for coach features. Deployed via Lovable (`lovableproject.com`); Capacitor config points `webDir: dist` with a remote server URL.
+FitTrack is an offline-first fitness and nutrition tracking PWA (also Capacitor-wrapped for iOS/Android). Built with React 18 + TypeScript + Vite + Tailwind CSS + shadcn/ui. All user data lives in localStorage; the only server call is the AI coach chat via a Supabase Edge Function that proxies to Google Gemini (via Lovable AI gateway). Two user paths: "experienced" (self-directed tracker) and "new" (AI-coached with generated nutrition targets and workout splits). Monetisation is a soft premium gate with a 7-day free trial for coach features. Deployed via Lovable (`lovableproject.com`); Capacitor config points `webDir: dist` with a remote server URL. GitHub Pages hosts a static copy at `https://tholuccakool.github.io/gymbeginner/` (privacy policy and built app).
 
 ---
 
@@ -361,13 +361,31 @@ All @dnd-kit usage is in `WorkoutPage.tsx`:
 
 ---
 
-## 15. TODOs / WIP Markers
+## 15. Deployment & CI
+
+### Lovable
+- Primary deploy target. The app is hosted at `lovableproject.com`.
+
+### Capacitor (iOS/Android)
+- `capacitor.config.ts` sets `webDir: dist` with a remote server URL.
+- See Section 12 for native notification setup.
+
+### GitHub Pages
+- **Workflow**: `.github/workflows/pages.yml` — triggered on push to `main` (and manual `workflow_dispatch`).
+- **Build**: runs `npx vite build --base /gymbeginner/` so assets resolve under the repo subpath.
+- **URL**: `https://tholuccakool.github.io/gymbeginner/`
+- **Privacy policy**: `public/privacy-policy.html` → `https://tholuccakool.github.io/gymbeginner/privacy-policy.html` (standalone HTML, no React routing needed). Contains contact info (Thol Ucca Kool, uccakoolthol@gmail.com).
+- **Note**: The `--base` flag is only used in the Pages workflow. Local dev (`npm run dev`) and the default `npm run build` use `/` as base, preserving compatibility with Lovable and Capacitor deploys.
+
+---
+
+## 16. TODOs / WIP Markers
 
 No `TODO`, `FIXME`, `XXX`, `HACK`, `@ts-ignore`, `@ts-expect-error`, or `eslint-disable` found in `src/` (excluding `src/components/ui/`).
 
 ---
 
-## 16. Divergences from Stated Patterns
+## 17. Divergences from Stated Patterns
 
 ### Premium gating violations (Section 6)
 - `usePremiumGate` hook in `PremiumPaywall.tsx` reads `profile?.isPremium` directly, bypassing `isFeatureUnlocked()`. Used by TodayPage, ProfilePage, CoachOnboarding, DailyGuidance.
