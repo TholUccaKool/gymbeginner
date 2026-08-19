@@ -103,7 +103,7 @@ export default function HistoryPage() {
         </div>
 
         {/* Date Navigation */}
-        <div className="flex items-center justify-between mb-6 bg-card rounded-2xl border border-border/60 p-4 shadow-sm">
+        <div className="flex items-center justify-between mb-6 bg-card rounded-2xl border border-primary/20 p-4 shadow-md shadow-primary/5">
           <button 
             onClick={() => navigateDay('prev')}
             className="p-2.5 rounded-xl hover:bg-secondary transition-all duration-200 active:scale-95"

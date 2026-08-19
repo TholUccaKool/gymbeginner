@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { Coffee, Dumbbell, Play, ArrowRight, Crown, CheckCircle2, TrendingUp, Calendar, ChevronRight } from "lucide-react";
+import { Coffee, Dumbbell, Play, ArrowRight, Sparkles, CheckCircle2, TrendingUp, Calendar, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   getUserProfile, 
@@ -184,7 +184,7 @@ export function TodayStatus({ onStartWorkout }: TodayStatusProps) {
     
     return (
       <div className="space-y-3 mb-6 animate-slide-up">
-        <div className="bg-card rounded-2xl border border-primary/20 p-5 shadow-sm relative overflow-hidden">
+        <div className="bg-card rounded-2xl border border-primary/30 p-5 shadow-md shadow-primary/10 ring-1 ring-primary/10 relative overflow-hidden">
           {/* Subtle glow effect for AI-added workouts */}
           <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-accent/5 pointer-events-none" />
           
@@ -195,8 +195,8 @@ export function TodayStatus({ onStartWorkout }: TodayStatusProps) {
               </div>
               <div className="flex-1">
                 <div className="flex items-center gap-1.5 mb-1">
-                  <Crown className="w-3 h-3 text-amber-500" />
-                  <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">Adjusted schedule</span>
+                  <Sparkles className="w-3 h-3 text-primary" />
+                  <span className="text-[10px] font-medium text-primary uppercase tracking-wider">Adjusted schedule</span>
                 </div>
                 <span className="text-xs text-muted-foreground">{dayName}</span>
                 <h3 className="font-display font-bold text-lg">{existingWorkout.name || typeInfo.label}</h3>
@@ -237,8 +237,8 @@ export function TodayStatus({ onStartWorkout }: TodayStatusProps) {
             <div className="flex-1">
               {coachActive && (
                 <div className="flex items-center gap-1.5 mb-1">
-                  <Crown className="w-3 h-3 text-amber-500" />
-                  <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">Scheduled rest</span>
+                  <Sparkles className="w-3 h-3 text-primary" />
+                  <span className="text-[10px] font-medium text-primary uppercase tracking-wider">Scheduled rest</span>
                 </div>
               )}
               <span className="text-xs text-muted-foreground">{dayName}</span>
@@ -273,7 +273,7 @@ export function TodayStatus({ onStartWorkout }: TodayStatusProps) {
   
   return (
     <div className="space-y-3 mb-6 animate-slide-up">
-      <div className="bg-card rounded-2xl border border-primary/20 p-5 shadow-sm">
+      <div className="bg-card rounded-2xl border border-primary/30 p-5 shadow-md shadow-primary/10 ring-1 ring-primary/10">
         <div className="flex items-center gap-4 mb-4">
           <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center shadow-lg shadow-primary/20">
             <span className="text-2xl">{typeInfo.emoji}</span>
@@ -281,8 +281,8 @@ export function TodayStatus({ onStartWorkout }: TodayStatusProps) {
           <div className="flex-1">
             {coachActive && (
               <div className="flex items-center gap-1.5 mb-1">
-                <Crown className="w-3 h-3 text-amber-500" />
-                <span className="text-[10px] font-medium text-amber-600 dark:text-amber-400 uppercase tracking-wider">Today's workout</span>
+                <Sparkles className="w-3 h-3 text-primary" />
+                <span className="text-[10px] font-medium text-primary uppercase tracking-wider">Today's workout</span>
               </div>
             )}
             <span className="text-xs text-muted-foreground">{dayName}</span>
@@ -314,7 +314,7 @@ export function TodayStatus({ onStartWorkout }: TodayStatusProps) {
 // Weekly Progress Bar Component
 function WeeklyProgressBar({ stats }: { stats: { completedWorkouts: number; missedWorkouts: number; totalWorkoutsThisWeek: number; daysTracked: number; dayOfWeek: number } }) {
   return (
-    <div className="bg-card rounded-2xl border border-border/60 p-4 shadow-sm">
+    <div className="bg-card/70 rounded-2xl border border-border/40 p-4">
       <div className="flex items-center gap-2 mb-3">
         <TrendingUp className="w-4 h-4 text-primary" />
         <span className="text-sm font-medium">This Week</span>

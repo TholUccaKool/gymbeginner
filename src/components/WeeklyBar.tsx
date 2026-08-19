@@ -54,7 +54,7 @@ export function WeeklyBar() {
   const scheduledCount = workoutDays.length;
 
   return (
-    <div className="bg-card rounded-2xl border border-border/60 p-4 mb-6 shadow-sm animate-slide-up">
+    <div className="bg-card/70 rounded-2xl border border-border/40 p-4 mb-6 animate-slide-up">
       <div className="flex items-center justify-between mb-3">
         <p className="text-sm font-medium">This Week</p>
         <p className="text-xs text-muted-foreground">

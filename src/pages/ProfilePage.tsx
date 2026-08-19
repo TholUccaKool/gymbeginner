@@ -266,7 +266,7 @@ export default function ProfilePage() {
         </button>
 
         {/* Notifications */}
-        <div className="bg-card rounded-2xl border border-border/60 overflow-hidden mb-4 shadow-sm animate-slide-up" style={{ animationDelay: '200ms' }}>
+        <div className="bg-card/70 rounded-2xl border border-border/40 overflow-hidden mb-4 animate-slide-up" style={{ animationDelay: '200ms' }}>
           <div className="p-4 border-b border-border/60">
             <div className="flex items-center gap-2">
               <Bell className="w-5 h-5 text-muted-foreground" />
@@ -279,7 +279,7 @@ export default function ProfilePage() {
         </div>
 
         {/* Settings */}
-        <div className="bg-card rounded-2xl border border-border/60 overflow-hidden mb-6 shadow-sm animate-slide-up" style={{ animationDelay: '250ms' }}>
+        <div className="bg-card/70 rounded-2xl border border-border/40 overflow-hidden mb-6 animate-slide-up" style={{ animationDelay: '250ms' }}>
           <div className="p-4 border-b border-border/60">
             <div className="flex items-center gap-2">
               <Settings className="w-5 h-5 text-muted-foreground" />

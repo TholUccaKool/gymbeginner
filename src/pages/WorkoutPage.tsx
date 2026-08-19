@@ -760,8 +760,8 @@ export default function WorkoutPage() {
             </div>
           ))}
         </div>
-        <div className="fixed bottom-20 left-0 right-0 p-4 bg-gradient-to-t from-background via-background to-transparent">
-          <div className="max-w-lg mx-auto">
+        <div className="fixed bottom-20 left-0 right-0 p-4 pb-6 bg-gradient-to-t from-background via-background to-transparent z-50">
+          <div className="max-w-lg mx-auto pr-16">
             <Button size="xl" className="w-full shadow-lg shadow-primary/20" onClick={finishWorkout}>
               Finish Workout <Check className="w-5 h-5 ml-2" />
             </Button>

@@ -81,26 +81,26 @@ export function WeeklyStreakCard() {
   const nextMilestone = milestones.find(m => m > current) ?? current + 4;
 
   return (
-    <div className="bg-card rounded-2xl border border-border/60 p-4 mb-4 shadow-sm animate-slide-up">
+    <div className="bg-card/70 rounded-2xl border border-border/40 p-4 mb-4 animate-slide-up">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className={cn(
             "w-11 h-11 rounded-xl flex items-center justify-center",
-            current >= 4 
-              ? "bg-gradient-to-br from-amber-400 to-orange-500 shadow-md" 
+            current >= 4
+              ? "bg-gradient-to-br from-primary to-primary/80 shadow-md"
               : "bg-primary/10"
           )}>
             {current >= 8 ? (
-              <Trophy className={cn("w-5 h-5", current >= 4 ? "text-white" : "text-primary")} />
+              <Trophy className={cn("w-5 h-5", current >= 4 ? "text-primary-foreground" : "text-primary")} />
             ) : (
-              <Flame className={cn("w-5 h-5", current >= 4 ? "text-white" : "text-primary")} />
+              <Flame className={cn("w-5 h-5", current >= 4 ? "text-primary-foreground" : "text-primary")} />
             )}
           </div>
           <div>
             <div className="flex items-center gap-2">
               <span className="font-display font-bold text-xl">{current}</span>
               <span className="text-sm font-medium text-muted-foreground">week streak</span>
-              {current >= 4 && <Zap className="w-3.5 h-3.5 text-amber-500" />}
+              {current >= 4 && <Zap className="w-3.5 h-3.5 text-primary" />}
             </div>
             <p className="text-xs text-muted-foreground">
               {thisWeekDone 
