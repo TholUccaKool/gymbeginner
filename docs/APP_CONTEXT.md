@@ -207,6 +207,23 @@ Many of these use `new Date()` for ISO timestamps (`.toISOString()`) which is co
 - **Toggle**: `ProfilePage.tsx` cycles through **system → dark → light → system** via `useTheme()`. Icons: Monitor (system), Moon (dark), Sun (light).
 - **Dev-only features**: The debug date panel (`PageHeader.tsx`) and the premium demo toggle (`ProfilePage.tsx`) are gated behind `import.meta.env.DEV`, which Vite tree-shakes from production builds.
 
+### Visual Hierarchy Convention
+
+Cards follow a two-tier visual weight system:
+
+| Tier | Style | Used for |
+|---|---|---|
+| **Primary** (action) | `bg-card`, `border-primary/20–30`, `shadow-md`, optional `ring-1 ring-primary/10` | TodayStatus workout card, History date navigator, Profile action cards (Daily Targets, AI Coach) |
+| **Secondary** (informational) | `bg-card/70`, `border-border/40`, no shadow | WeeklyBar, WeeklyStreakCard, WeeklyProgressBar (inside TodayStatus), Profile Reminders/Settings cards |
+
+Standard cards (`bg-card`, `border-border/60`, `shadow-sm`) sit between these tiers and are used for most content cards (meals, workout exercises, coach profile, PRs).
+
+### Icon & Color Conventions
+
+- **Crown icon** (`Crown` from lucide): reserved exclusively for premium-gated UI (PremiumPaywall, ProFeatureGate, premium badge on ProfilePage, upsell CTAs in DailyGuidance/WeeklyReviewCard).
+- **Sparkles icon** (`Sparkles`): used for AI coach features that are free (TodayStatus plan labels: "Today's workout", "Scheduled rest", "Adjusted schedule").
+- **Amber/orange gradient** (`from-amber-400 to-orange-500`): reserved for premium UI only (paywall, pro gate, premium badge). Non-premium features use `primary` (teal) for accents.
+
 ### Color/Theme Drift
 
 ### `text-white` violations (outside src/components/ui/)
@@ -219,8 +236,6 @@ Many of these use `new Date()` for ISO timestamps (`.toISOString()`) which is co
 | `PremiumPaywall.tsx` | 121 | Purchase button text |
 | `ProfilePage.tsx` | 84 | Crown icon on premium badge |
 | `ProfilePage.tsx` | 94 | "PREMIUM" badge text |
-| `WeeklyStreakCard.tsx` | 94 | Trophy icon (when streak >= 4) |
-| `WeeklyStreakCard.tsx` | 96 | Flame icon (when streak >= 4) |
 
 ### Hex literals (outside tailwind.config.ts/index.css)
 
@@ -244,6 +259,7 @@ No `text-black`, `bg-white`, `bg-black`, or `Colors.` references found outside u
 ### WorkoutPage
 - **Children**: `PageHeader`, `BottomNav`, `ExitWorkoutDialog`, `ExerciseAnimation`, `Dialog` (custom builder), `DndContext`/`SortableContext` (exercise reordering), `SortableExerciseItem`
 - **Local state**: `workout`, `isActive`, `showCustomBuilder`, `showExitDialog`, `selectedExercises`, `exerciseSearch`, `editingSet`, `editValue`, `expandedExercise`
+- **Layout note**: Active workout view's fixed "Finish Workout" button uses `pr-16` to avoid overlapping the floating CoachChat FAB (both sit near bottom-right).
 
 ### HistoryPage
 - **Children**: `PageHeader`, `BottomNav`, `EmptyState`
@@ -364,7 +380,7 @@ No `TODO`, `FIXME`, `XXX`, `HACK`, `@ts-ignore`, `@ts-expect-error`, or `eslint-
 - `WeeklyBar.tsx:23` uses `new Date()` for week calculation -- ignores debug date offset.
 
 ### Color/theme drift (Section 8)
-- 8 instances of `text-white` in non-ui components (amber gradient backgrounds, premium badges).
+- 6 instances of `text-white` in non-ui components (premium badges/paywall only — correctly tied to amber gradient backgrounds).
 - 4 instances of hardcoded `#7c3aed` hex in native notifications (should reference a shared constant or theme token).
 
 ### Personal Records comparison inconsistency (Section 11)
@@ -375,6 +391,7 @@ No `TODO`, `FIXME`, `XXX`, `HACK`, `@ts-ignore`, `@ts-expect-error`, or `eslint-
 - `src/components/NavLink.tsx` - custom NavLink wrapper, not imported by any component (BottomNav uses `react-router-dom` NavLink directly).
 - `src/hooks/use-mobile.tsx` and `src/hooks/use-toast.ts` - present but not checked for usage.
 - `recharts` is a dependency and `chart.tsx` wrapper exists but no component uses it.
+- `CoachOnboarding.tsx` imports `Crown` from lucide but never uses it (dead import).
 
 ### Feature flags not covering all gated features
 - `weekly_reviews`, `smart_adjustments`, `coach_memory`, `daily_guidance`, `adaptive_difficulty`, `advanced_analytics` are defined in features.ts but none are checked via `isFeatureUnlocked()` in application code. Gating is done via `hasCoachAccess()` (trial-based) or `isPremium()` (direct profile read) instead.
