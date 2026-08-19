@@ -15,7 +15,7 @@ FitTrack is an offline-first fitness and nutrition tracking PWA (also Capacitor-
 | `/today` | `TodayPage` | Daily dashboard: nutrition rings, meal logging, weekly bar, calorie adjustments, daily guidance, AI feedback | `ProtectedRoute` (requires profile) |
 | `/workout` | `WorkoutPage` | Workout selection, active workout tracking with sets/reps/weight, custom workout builder | `ProtectedRoute` |
 | `/history` | `HistoryPage` | Day-by-day history browser with week overview, meals + workout details | `ProtectedRoute` |
-| `/profile` | `ProfilePage` | Settings, nutrition targets, AI coach access, notification settings, theme toggle, PR list, premium toggle (demo) | `ProtectedRoute` |
+| `/profile` | `ProfilePage` | Settings, nutrition targets, AI coach access, notification settings, theme toggle (system/dark/light), PR list, premium toggle (dev-only) | `ProtectedRoute` |
 | `*` | `NotFound` | 404 page | None |
 
 `ProtectedRoute` checks `getUserProfile() !== null`; redirects to `/` if missing.
@@ -126,7 +126,7 @@ Also exports: `COMMON_FOODS` (20 items), `DEFAULT_EXERCISES` (by workout type), 
 | Event | Constant | Fired by | Listened by |
 |---|---|---|---|
 | `app:dataUpdated` | `APP_EVENTS.DATA_UPDATED` | `CoachChat.tsx` (after action applied), `coachChat.ts:applyCoachAction` (schedule_workout) | `TodayPage` (refresh meals + child components), `WorkoutPage` (refresh workout) |
-| `app:profileUpdated` | `APP_EVENTS.PROFILE_UPDATED` | `storage.ts:saveUserProfile` | `App.tsx:AppContent` (toggle CoachChat visibility), `AIPerformanceFeedback` (react to premium toggle) |
+| `app:profileUpdated` | `APP_EVENTS.PROFILE_UPDATED` | `storage.ts:saveUserProfile` | `App.tsx:AppContent` (toggle CoachChat visibility), `AIPerformanceFeedback` (react to premium change) |
 
 Additionally, `debugDate.ts` emits a raw `debug-date-change` CustomEvent (not part of events.ts).
 
@@ -197,7 +197,17 @@ Many of these use `new Date()` for ISO timestamps (`.toISOString()`) which is co
 
 ---
 
-## 8. Color/Theme Drift
+## 8. Theme System
+
+### Dark Mode
+
+- **Provider**: `next-themes` `ThemeProvider` wraps the app in `App.tsx` with `attribute="class"`, `defaultTheme="system"`, `enableSystem`.
+- **CSS**: `src/index.css` defines a full `.dark` block with all CSS variables (background, foreground, primary, accent, muted, nutrition colors, etc.).
+- **Tailwind**: `tailwind.config.ts` sets `darkMode: ["class"]`.
+- **Toggle**: `ProfilePage.tsx` cycles through **system → dark → light → system** via `useTheme()`. Icons: Monitor (system), Moon (dark), Sun (light).
+- **Dev-only features**: The debug date panel (`PageHeader.tsx`) and the premium demo toggle (`ProfilePage.tsx`) are gated behind `import.meta.env.DEV`, which Vite tree-shakes from production builds.
+
+### Color/Theme Drift
 
 ### `text-white` violations (outside src/components/ui/)
 
@@ -241,7 +251,7 @@ No `text-black`, `bg-white`, `bg-black`, or `Colors.` references found outside u
 
 ### ProfilePage
 - **Children**: `PageHeader`, `BottomNav`, `NotificationSettings`, `EmptyState`, `Dialog` (edit targets), `PremiumPaywall`
-- **Local state**: `targets`, `isEditingTargets`, premium gate state (via `usePremiumGate`), `forceUpdate` (dummy state for re-render)
+- **Local state**: `targets`, `isEditingTargets`, `theme` (via `useTheme`), premium gate state (via `usePremiumGate`), `forceUpdate` (dummy state for re-render, dev-only premium toggle)
 
 ### Onboarding
 - **Children**: `Button`, `Input` (none from component library beyond ui primitives)

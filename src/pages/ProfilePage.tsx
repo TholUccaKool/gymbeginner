@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Settings, Sparkles, Target, User, ChevronRight, Trash2, Moon, Sun, Crown, Bell, Trophy, Dumbbell } from "lucide-react";
+import { Settings, Sparkles, Target, User, ChevronRight, Trash2, Moon, Sun, Crown, Bell, Trophy, Dumbbell, Monitor } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,7 +51,8 @@ export default function ProfilePage() {
   };
 
   const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+    const next = theme === 'system' ? 'dark' : theme === 'dark' ? 'light' : 'system';
+    setTheme(next);
   };
 
   const handleAICoachClick = () => {
@@ -293,12 +294,14 @@ export default function ProfilePage() {
             <div className="flex items-center gap-3">
               {theme === 'dark' ? (
                 <Moon className="w-5 h-5 text-muted-foreground" />
-              ) : (
+              ) : theme === 'light' ? (
                 <Sun className="w-5 h-5 text-muted-foreground" />
+              ) : (
+                <Monitor className="w-5 h-5 text-muted-foreground" />
               )}
               <span>Appearance</span>
             </div>
-            <span className="text-sm text-muted-foreground capitalize">{theme || 'System'}</span>
+            <span className="text-sm text-muted-foreground capitalize">{theme || 'system'}</span>
           </button>
           
           <button
@@ -313,31 +316,33 @@ export default function ProfilePage() {
           </button>
         </div>
 
-        {/* Premium Status */}
-        <div className="bg-card rounded-2xl border border-dashed border-amber-400/50 p-4 mb-6 animate-slide-up" style={{ animationDelay: '300ms' }}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <Crown className="w-5 h-5 text-amber-500" />
-              <div>
-                <p className="font-medium text-sm">
-                  {paidPlan ? 'Premium Active' : 'Free Plan'}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {paidPlan 
-                    ? 'Ongoing coaching enabled' 
-                    : 'You can track meals & workouts'}
-                </p>
+        {/* Premium Status — dev only */}
+        {import.meta.env.DEV && (
+          <div className="bg-card rounded-2xl border border-dashed border-amber-400/50 p-4 mb-6 animate-slide-up" style={{ animationDelay: '300ms' }}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Crown className="w-5 h-5 text-amber-500" />
+                <div>
+                  <p className="font-medium text-sm">
+                    {paidPlan ? 'Premium Active' : 'Free Plan'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {paidPlan
+                      ? 'Ongoing coaching enabled'
+                      : 'You can track meals & workouts'}
+                  </p>
+                </div>
               </div>
+              <Switch
+                checked={paidPlan}
+                onCheckedChange={togglePremiumDemo}
+              />
             </div>
-            <Switch 
-              checked={paidPlan}
-              onCheckedChange={togglePremiumDemo}
-            />
+            <p className="text-[10px] text-muted-foreground mt-2 text-center">
+              Demo toggle for testing — dev only
+            </p>
           </div>
-          <p className="text-[10px] text-muted-foreground mt-2 text-center">
-            Demo toggle for testing
-          </p>
-        </div>
+        )}
 
         {/* App Info */}
         <div className="text-center text-sm text-muted-foreground animate-fade-in" style={{ animationDelay: '350ms' }}>
