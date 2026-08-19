@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FitTrack - Privacy Policy</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem;
+      line-height: 1.6;
+      color: #1a1a1a;
+      background: #fff;
+    }
+    @media (prefers-color-scheme: dark) {
+      body { color: #e0e0e0; background: #1a1a1a; }
+      a { color: #93b5ff; }
+    }
+    h1 { font-size: 1.5rem; margin-bottom: 0.25rem; }
+    h2 { font-size: 1.15rem; margin-top: 2rem; }
+    p, li { font-size: 0.95rem; }
+    ul { padding-left: 1.25rem; }
+    .updated { font-size: 0.85rem; color: #666; margin-bottom: 2rem; }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.9rem; }
+    th, td { text-align: left; padding: 0.5rem; border-bottom: 1px solid #ddd; }
+    @media (prefers-color-scheme: dark) {
+      .updated { color: #999; }
+      th, td { border-color: #333; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>FitTrack Privacy Policy</h1>
+<p class="updated">Last updated: August 19, 2026</p>
+
+<p>
+  FitTrack is a fitness and nutrition tracking app that stores your data locally on your device.
+  This policy describes exactly what data the app collects, where it goes, and what stays private.
+</p>
+
+<h2>1. Data stored on your device</h2>
+<p>
+  All of the following data is stored in your browser's localStorage (or the app's local storage on iOS/Android via Capacitor). It never leaves your device except as described in Section 2.
+</p>
+<table>
+  <tr><th>Category</th><th>What's stored</th></tr>
+  <tr><td>Profile</td><td>Experience level, training days, preferred workout days</td></tr>
+  <tr><td>Body metrics (coach users only)</td><td>Age, height (cm), weight (kg), fitness goal, physique preference, equipment access, injuries, diet preference</td></tr>
+  <tr><td>Nutrition</td><td>Calorie and protein targets; meal log entries (name, calories, protein, date)</td></tr>
+  <tr><td>Workouts</td><td>Workout history (exercises, sets, reps, weight, completion status, duration, notes)</td></tr>
+  <tr><td>Coaching state</td><td>Workout and nutrition streaks, missed workout log, weekly review summaries</td></tr>
+  <tr><td>Exercise progression</td><td>Last weight and reps per exercise, suggested next weight</td></tr>
+  <tr><td>Preferences</td><td>Notification settings, premium status (demo only), exercise image cache</td></tr>
+</table>
+<p>
+  There are no user accounts, no login, no email addresses, and no passwords. You are not identified by name or contact information anywhere in the app.
+</p>
+
+<h2>2. Data that leaves your device</h2>
+<p>
+  The only feature that transmits data off your device is the <strong>AI Coach chat</strong>. When you send a message to the coach, the following context is sent alongside your message to a server-side function:
+</p>
+<ul>
+  <li>Your chat message text</li>
+  <li>Today's calorie and protein targets</li>
+  <li>Today's logged meals (name, calories, protein)</li>
+  <li>Today's calorie/protein totals</li>
+  <li>Your training schedule (which days, how many per week)</li>
+  <li>Today's planned workout type and completion status</li>
+  <li>Behavioral summary: current workout streak, nutrition streak, missed workouts in the last 14 days</li>
+  <li>Current date and day of week</li>
+</ul>
+<p>
+  This data is sent to a Supabase Edge Function (a server-side proxy), which forwards it to <strong>Lovable's AI gateway</strong> (<code>ai.gateway.lovable.dev</code>), which routes to Google's Gemini model for processing. The Edge Function is stateless &mdash; it does not store your data. The response is returned to your device and that is the end of the transaction.
+</p>
+<p>
+  Your body metrics (age, height, weight), injury information, and diet preferences are <strong>not</strong> sent to the AI coach. Only the context listed above is transmitted.
+</p>
+
+<h2>3. Data that is never collected</h2>
+<ul>
+  <li>No email, name, phone number, or account credentials</li>
+  <li>No location or GPS data</li>
+  <li>No camera, microphone, or contacts access</li>
+  <li>No advertising identifiers or device fingerprinting</li>
+  <li>No analytics, tracking pixels, or error-reporting services (no Google Analytics, Sentry, Mixpanel, or similar)</li>
+  <li>No cookies (the app uses localStorage only)</li>
+</ul>
+
+<h2>4. Third-party services</h2>
+<table>
+  <tr><th>Service</th><th>Purpose</th><th>Data sent</th></tr>
+  <tr>
+    <td>Lovable AI gateway / Google Gemini</td>
+    <td>AI Coach responses</td>
+    <td>Chat messages and today's nutrition/workout context (see Section 2)</td>
+  </tr>
+  <tr>
+    <td>GitHub (yuhonas/free-exercise-db)</td>
+    <td>Exercise demonstration images</td>
+    <td>None &mdash; the app fetches static image files; no user data is sent</td>
+  </tr>
+  <tr>
+    <td>Google Fonts</td>
+    <td>Typography (cached by service worker)</td>
+    <td>Standard HTTP request headers only</td>
+  </tr>
+</table>
+<p>
+  No other third-party services receive data from the app.
+</p>
+
+<h2>5. Payment and subscription</h2>
+<p>
+  The premium/pro features shown in the app are a <strong>demo</strong>. No real payment processing exists. No payment information is collected, stored, or transmitted. The "purchase" button sets a local flag in your browser &mdash; nothing more.
+</p>
+
+<h2>6. Notifications</h2>
+<p>
+  FitTrack can send local notifications (workout reminders, meal tracking reminders) using your device's built-in notification system. These are scheduled and triggered entirely on your device. No notification data is sent to any server.
+</p>
+
+<h2>7. Data retention and deletion</h2>
+<p>
+  Since all data is stored locally on your device:
+</p>
+<ul>
+  <li><strong>To delete all data:</strong> Clear your browser's site data for FitTrack, or uninstall the app.</li>
+  <li><strong>There is no server-side data to delete.</strong> The AI Coach Edge Function is stateless and does not retain your messages or context after responding.</li>
+  <li>Coach memory (streaks, nutrition days) is automatically trimmed to the last 30 days. Weekly reviews are trimmed to the last 12 weeks.</li>
+</ul>
+
+<h2>8. Children</h2>
+<p>
+  FitTrack does not knowingly collect data from children under 13. The app does not collect identifying information from anyone.
+</p>
+
+<h2>9. Changes to this policy</h2>
+<p>
+  If the app's data practices change (for example, if cloud sync, user accounts, or real payment processing are added), this policy will be updated and the "last updated" date revised accordingly.
+</p>
+
+<h2>10. Contact</h2>
+<p>
+  For questions about this privacy policy, open an issue on the project's GitHub repository or contact the developer directly.
+</p>
+
+</body>
+</html>

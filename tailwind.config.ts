@@ -111,6 +111,16 @@ export default {
           from: { opacity: "0", transform: "scale(0.96)" },
           to: { opacity: "1", transform: "scale(1)" },
         },
+        "exercise-crossfade": {
+          "0%, 45%": { opacity: "1" },
+          "50%, 95%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        "exercise-crossfade-alt": {
+          "0%, 45%": { opacity: "0" },
+          "50%, 95%": { opacity: "1" },
+          "100%": { opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -118,6 +128,8 @@ export default {
         "slide-up-fade": "slide-up-fade 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
         "slide-down-fade": "slide-down-fade 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
         "scale-in": "scale-in 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+        "exercise-crossfade": "exercise-crossfade 2s ease-in-out infinite",
+        "exercise-crossfade-alt": "exercise-crossfade-alt 2s ease-in-out infinite",
       },
       spacing: {
         "18": "4.5rem",
